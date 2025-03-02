@@ -1,18 +1,31 @@
 /**
  * Prologue
- * SideNav
+ * 
+ * SideNav Component
+ *
  * This component displays the sidebar navigation for the dashboard, allowing users 
  * to navigate between different sections.
  * Highlights the active menu item based on the current path.
  * Includes a logo and a user profile button.
  * 
- * Dependencies: Next.js `Image`, `Link`, and `usePathname` for routing and image handling.
+ * Input: None 
+ * Output: AJSX that display a sidebar with navigation links and a user profile button.
+ * 
+ * Dependencies:
+ * - `@clerk/nextjs` for `UserButton` component to manage user sessions
+ * - `lucide-react` for icons 
+ * - `next/image` for displaying the logo
+ * - `next/link` for navigation links
+ * - `next/navigation` for routing functionality
+ * 
+ * Author: Kristin Boeckmann, Lisa Phan, Zach Alwin, Vinayak Jha, Shravya Matta 
+ * Creation Date: 02/16/2025
  */
 
 "use client"; // Enables client-side rendering
 import { UserButton } from '@clerk/nextjs'; // Imports Clerk's UserButton for authentication
 import { ChartSpline, LayoutGrid, LibraryBig, ReceiptText } from 'lucide-react'; // Imports Lucide-react icons for visual representation of menu items.
-import Image from 'next/image';
+import Image from 'next/image'; // Imports Next.js Image component for displaying the logo
 import Link from 'next/link'; // Imports Next.js Link component for navigation
 import { usePathname } from 'next/navigation'; // Imports Next.js usePathname hook for routing
 import React, { useEffect } from 'react';
