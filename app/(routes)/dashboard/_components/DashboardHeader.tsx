@@ -1,4 +1,5 @@
 /**
+ * Prologue
  * DashboardHeader 
  * This component displays dashboard's header, including a user button 
  * provided by Clerk for authentication.
