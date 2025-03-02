@@ -1,7 +1,23 @@
+/**
+Prologue:
+Name of Program: app/(routes)/dashboard/categories/_components/CategoryItem.tsx
+Description: Provides CategorytItem JSX component.
+Inputs: None
+Outputs: Exports CategorytItem JSX component to display a Category
+Author: Kristin Boeckmann, Zach Alwin, Shravya Mehta, Lisa Phan, Vinayak Jha
+Creation Date: 02/26/2025
+*/
+
+// Import Link
 import Link from 'next/link';
+// Import React
 import React from 'react'
 
-
+// Name: Categories
+// Author: Zach
+// Date: 02/26/2025
+// Preconditions: category item
+// Postconditions: JSX Component to show the category
 function CategorytItem({ category }: any) {
 
 
@@ -60,4 +76,5 @@ function CategorytItem({ category }: any) {
     );
 }
 
+// Export CategorytItem
 export default CategorytItem;

@@ -1,3 +1,36 @@
+/** Prologue
+ * AddExpense Component
+ * 
+ * This React component allows users to add a new expense by providing a name, amount, category, and transaction date.
+ * The expense data is stored in the database and a refresh function is called to update the UI.
+ * 
+ * Programmer: Kristin Boeckmann, Zach Alwin, Shravya Mehta, Lisa Phan, Vinayak Jha
+ * Created Date: 02/25/2025
+ * 
+ * Revisions:
+ * - N/A
+ * 
+ * Preconditions:
+ * - User must be authenticated.
+ * - Database connection must be properly configured.
+ * 
+ * Acceptable Inputs:
+ * - Name: A string representing the expense name (e.g., 'Walmart').
+ * - Amount: A number representing the expense cost (e.g., '50').
+ * - Category: A selected category from the list.
+ * - Transaction Date: A valid date selected from the date picker.
+ * 
+ * Postconditions:
+ * - The new expense is added to the database.
+ * - The UI is refreshed to reflect the new expense.
+ * - A success toast message is displayed.
+ * 
+ * Error Handling:
+ * - If fetching categories fails, an error is logged to the console.
+ * - If required fields are missing, the submit button is disabled.
+ * - If database insertion fails, an error message could be added (not implemented here).
+ */
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input'
 import { db } from '@/utils/dbConfig';
@@ -31,23 +64,29 @@ interface AddExpenseProps {
 
 function AddExpense({ categoryId, user, refreshData }: AddExpenseProps) {
 
-  const [name, setName] = useState<string>('');
-  const [amount, setAmount] = useState<string>('');
-  const [categories, setCategories] = useState<{ value: string; label: string; icon: string }[]>([]);
-  const [transactionDate, setTransactionDate] = useState<Date | undefined>(undefined);
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [open, setOpen] = useState(false);
+ // State variables for user inputs
+  const [name, setName] = useState<string>(''); // Expense name
+  const [amount, setAmount] = useState<string>(''); // Expense amount
+  const [categories, setCategories] = useState<{ value: string; label: string; icon: string }[]>([]); // Categories list
+  const [transactionDate, setTransactionDate] = useState<Date | undefined>(undefined); // Selected transaction date
+  const [selectedCategory, setSelectedCategory] = useState<string>(''); // Selected category ID
+  const [open, setOpen] = useState(false); // Popover state
 
+  // Fetch categories when the component mounts
   useEffect(() => {
-    // Fetch categories from the database
     const fetchCategories = async () => {
       try {
+        // Query database for categories created by the user
         const result = await db.select().from(Categories).where(eq(Categories.createdBy, user?.primaryEmailAddress?.emailAddress));
+        
+        // Transform database result into dropdown-friendly format
         const categoryOptions = result.map((category) => ({
           value: category.id.toString(),
           label: category.name,
-          icon: category.icon || "",  // Ensure you have an icon URL or class here
+          icon: category.icon || "",  // Ensure an icon is available
         }));
+        
+        // Update state with fetched categories
         setCategories(categoryOptions);
       } catch (error) {
         console.error("Failed to fetch categories:", error);
@@ -58,25 +97,28 @@ function AddExpense({ categoryId, user, refreshData }: AddExpenseProps) {
 }, []);
 
 
+  // Function to add a new expense
   const addNewExpense = async () => {
-    const categoryIdInt = parseInt(selectedCategory, 10);
+    const categoryIdInt = parseInt(selectedCategory, 10); // Convert selected category to integer
 
-    // Format the date as MM-DD-YYYY
+    // Format transaction date as MM-DD-YYYY
     const formattedDate = transactionDate ? moment(transactionDate).format('MM-DD-YYYY') : '';
 
+    // Insert new expense into database
     const result = await db.insert(Expenses)
       .values({
         name: name,
         amount: amount,
         categoryId: categoryIdInt,
-        createdAt: formattedDate, // Use the formatted date
+        createdAt: formattedDate,
         createdBy: user?.primaryEmailAddress?.emailAddress as string,
       }).returning({ insertedId: Expenses.id });
 
     console.log(result);
+    
     if (result) {
-      refreshData();
-      toast('New Expense Added!');
+      refreshData(); // Refresh expense list
+      toast('New Expense Added!'); // Show success message
     }
   };
 
@@ -85,6 +127,8 @@ function AddExpense({ categoryId, user, refreshData }: AddExpenseProps) {
       <h2 className='font-bold text-lg'>
         Add Expense
       </h2>
+
+      {/* Expense Name Input */}
       <div className='mt-3'>
         <h2 className='text-black font-medium my-1'>
           Expense Name
@@ -95,6 +139,8 @@ function AddExpense({ categoryId, user, refreshData }: AddExpenseProps) {
           onChange={(e) => { setName(e.target.value) }}
         />
       </div>
+
+      {/* Expense Category Dropdown */}
       <div>
         <h2 className='text-black font-medium my-1'>
           Expense Category
@@ -160,6 +206,8 @@ function AddExpense({ categoryId, user, refreshData }: AddExpenseProps) {
         </h2>
         <DatePicker onDateChange={setTransactionDate} />
       </div>
+      
+      {/* Submit Button */}
       <Button disabled={!(name && amount && selectedCategory && transactionDate)}
         onClick={() => addNewExpense()}
         className='mt-3 w-full'>Add New Expense</Button>
