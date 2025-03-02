@@ -1,4 +1,10 @@
 "use client"
+/**
+ * Prologue Comments
+ * This code is a React component for a date picker.
+ * This will be used in the application to allow users to select a date.
+ * Valid dates will be passed to the parent component.
+ */
 
 import * as React from "react"
 import { format } from "date-fns"

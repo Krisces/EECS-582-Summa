@@ -1,13 +1,23 @@
 "use client"
 
+/**
+ * Prologue Comments
+ * This code is a React component for a command dialog.
+ * This will be used in the application to allow users to execute commands.
+ * The command dialog will be triggered by a button click.
+ */
+
+// Import necessary modules and components from React and other libraries
 import * as React from "react"
 import { type DialogProps } from "@radix-ui/react-dialog"
 import { Command as CommandPrimitive } from "cmdk"
 import { Search } from "lucide-react"
 
+// Import utility functions and components
 import { cn } from "@/lib/utils"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 
+// Define the Command component using React.forwardRef
 const Command = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive>
@@ -21,8 +31,10 @@ const Command = React.forwardRef<
     {...props}
   />
 ))
+// Set the display name for the Command component
 Command.displayName = CommandPrimitive.displayName
 
+// Define the CommandDialog component
 const CommandDialog = ({ children, ...props }: DialogProps) => {
   return (
     <Dialog {...props}>
@@ -35,6 +47,7 @@ const CommandDialog = ({ children, ...props }: DialogProps) => {
   )
 }
 
+// Define the CommandInput component using React.forwardRef
 const CommandInput = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Input>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.Input>
@@ -51,9 +64,10 @@ const CommandInput = React.forwardRef<
     />
   </div>
 ))
-
+// Set the display name for the CommandInput component
 CommandInput.displayName = CommandPrimitive.Input.displayName
 
+// Define the CommandList component using React.forwardRef
 const CommandList = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.List>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.List>
@@ -64,9 +78,10 @@ const CommandList = React.forwardRef<
     {...props}
   />
 ))
-
+// Set the display name for the CommandList component
 CommandList.displayName = CommandPrimitive.List.displayName
 
+// Define the CommandEmpty component using React.forwardRef
 const CommandEmpty = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Empty>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.Empty>
@@ -77,9 +92,10 @@ const CommandEmpty = React.forwardRef<
     {...props}
   />
 ))
-
+// Set the display name for the CommandEmpty component
 CommandEmpty.displayName = CommandPrimitive.Empty.displayName
 
+// Define the CommandGroup component using React.forwardRef
 const CommandGroup = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Group>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.Group>
@@ -93,9 +109,10 @@ const CommandGroup = React.forwardRef<
     {...props}
   />
 ))
-
+// Set the display name for the CommandGroup component
 CommandGroup.displayName = CommandPrimitive.Group.displayName
 
+// Define the CommandSeparator component using React.forwardRef
 const CommandSeparator = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Separator>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.Separator>
@@ -106,8 +123,10 @@ const CommandSeparator = React.forwardRef<
     {...props}
   />
 ))
+// Set the display name for the CommandSeparator component
 CommandSeparator.displayName = CommandPrimitive.Separator.displayName
 
+// Define the CommandItem component using React.forwardRef
 const CommandItem = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.Item>
@@ -121,9 +140,10 @@ const CommandItem = React.forwardRef<
     {...props}
   />
 ))
-
+// Set the display name for the CommandItem component
 CommandItem.displayName = CommandPrimitive.Item.displayName
 
+// Define the CommandShortcut component
 const CommandShortcut = ({
   className,
   ...props
@@ -138,8 +158,10 @@ const CommandShortcut = ({
     />
   )
 }
+// Set the display name for the CommandShortcut component
 CommandShortcut.displayName = "CommandShortcut"
 
+// Export all the defined components
 export {
   Command,
   CommandDialog,
