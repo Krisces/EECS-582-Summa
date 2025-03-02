@@ -1,9 +1,8 @@
 /**
+ * Prologue
  * SideNav
- * 
  * This component displays the sidebar navigation for the dashboard, allowing users 
  * to navigate between different sections.
- * 
  * Highlights the active menu item based on the current path.
  * Includes a logo and a user profile button.
  * 
