@@ -1,13 +1,25 @@
 /**
  * Prologue
- * DashboardHeader 
- * This component displays dashboard's header, including a user button 
- * provided by Clerk for authentication.
+ * 
+ * DashboardHeader Component
+ *  
+ * This component displays dashboard's header, including a user button provided 
+ * by Clerk for authentication.
  * Includes a flexbox-based layout for proper alignment.
+ * 
+ * Input: None
+ * Output: A JSX element rendering the header with a user button
+ * 
+ * Dependencies:
+ * - `@clerk/nextjs` for `UserButton` component to manage user sessions
+ * - `React` for component rendering
+ * 
+ * Author: Kristin Boeckmann, Lisa Phan, Zach Alwin, Vinayak Jha, Shravya Matta 
+ * Creation Date: 02/16/2025
  */
 
-import { UserButton } from '@clerk/nextjs';
-import React from 'react'; // Import React library
+import { UserButton } from '@clerk/nextjs'; // Imports clerk for user authentication
+import React from 'react'; // Imports React library
 
 // The component displays a simple dashboard header 
 function DashboardHeader() {
