@@ -65,7 +65,6 @@ function SideNav() {
                 {menuList.map((menu) => {
                     const isActive = path === menu.path; // Checks if the menu items are active
                     return (
-                        {/* Navigation link */}
                         <Link href={menu.path} key={menu.id}>
                             <h2
                                 className={`flex gap-2 items-center text-gray-500 font-medium mb-2 p-6 cursor-pointer rounded-md hover:text-primary hover:bg-violet-100 ${isActive ? 'text-primary bg-violet-100' : ''}`}

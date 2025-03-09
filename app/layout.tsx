@@ -14,11 +14,11 @@ export default function RootLayout({
   children: React.ReactNode;  // Defining the expected children prop as React nodes (components, elements, etc.)
 }>) {
   return (
-    <ClerkProvider>  {/* Wrapping the whole app with ClerkProvider to provide authentication context */}
-      <html lang="en">  {/* Setting the language attribute to English for better accessibility and SEO */}
-        <body className={inter.className}>  {/* Applying the 'Outfit' font class to the body */}
-          {children}  {/* Rendering child components or pages here */}
-          <Toaster />  {/* Rendering Toaster component for notifications */}
+    <ClerkProvider>
+      <html lang="en">
+        <body className={inter.className}>
+          {children}
+          <Toaster />
         </body>
       </html>
     </ClerkProvider>
