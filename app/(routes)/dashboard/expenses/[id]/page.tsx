@@ -99,14 +99,12 @@ function ExpensesScreen({ params }: any) {
 
     return (
         <div className='p-10'>
-            {/* Header Section - Title and Back Button */}
             <h2 className='text-3xl font-bold flex justify-between items-center'>
                 <span className='flex gap-2 items-center'>
                     <ArrowLeft onClick={() => route.back()} className='cursor-pointer' />
                     My Expenses
                 </span>
             </h2>
-            {/* Category and Add Expense Section */}
             <div className='grid grid-cols-1 md:grid-cols-2 mt-6 gap-5'>
                 {categoryInfo ? (
                     <CategorytItem category={categoryInfo} />
@@ -114,13 +112,11 @@ function ExpensesScreen({ params }: any) {
                     <div className='h-[150px] w-full bg-slate-200 rounded-lg animate-pulse'>
                     </div>
                 )}
-                {/* Add Expense Component */}
                 <AddExpense categoryId={params.id}
                     user={user}
                     refreshData={() => getCategoryInfo()}
                 />
             </div>
-            {/* Latest Expenses Section */}
             <div className='mt-4'>
                 <h2 className='font-bold text-lg'>Latest Expenses</h2>
                 <ExpenseListTable expensesList={expensesList}
