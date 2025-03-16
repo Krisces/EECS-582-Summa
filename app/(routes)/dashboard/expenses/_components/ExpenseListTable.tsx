@@ -57,6 +57,22 @@ interface ExpenseListTableProps {
  * @returns {JSX.Element} A table of expenses with an action column.
  */
 function ExpenseListTable({ expensesList, refreshData }: ExpenseListTableProps) {
+
+    const deleteExpense = async (expense: Expense) => {
+        try {
+            const result = await db.delete(Expenses)
+                .where(eq(Expenses.id, expense.id))
+                .returning();
+
+            if (result) {
+                toast('Expense Deleted');
+                refreshData();
+            }
+        } catch (error) {
+            toast.error('Failed to delete expense'); // Handle the error
+        }
+    };
+
     return (
         <div className='mt-3'> {/* Container for the table */}
             {/* Table Header */}
@@ -72,6 +88,12 @@ function ExpenseListTable({ expensesList, refreshData }: ExpenseListTableProps) 
                     <h2>{expense.name}</h2> {/* Expense name */}
                     <h2>{expense.amount}</h2> {/* Expense amount */}
                     <h2>{expense.createdAt}</h2> {/* Expense creation date */}
+                    <h2>
+                        <Trash
+                            className='text-red-600 cursor-pointer'
+                            onClick={() => deleteExpense(expense)}
+                        />
+                    </h2>
                 </div>
             ))}
         </div>

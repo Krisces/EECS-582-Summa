@@ -35,9 +35,22 @@ import React, { useEffect, useState } from 'react' // Imports React libraries fo
 import AddExpense from '../_components/AddExpenseWindow' // Imports Add Expense component
 import ExpenseListTable from '../_components/ExpenseListTable' // Imports Expense List Table component
 import { ArrowLeft, PenBox, Trash } from 'lucide-react' // Icons for UI
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { useRouter } from 'next/navigation' // Imports router for navigation
-import CategorytItem from '../../categories/_components/CategoryItem' // Imports Category Item component
+import EditCategory from '../_components/EditCategory'
+import CategorytItem from '../../categories/_components/CategoryItem'
 import { toast } from 'react-toastify' // Imports toast for notifications
+import { Button } from '@/components/ui/button'
 
 //This component displays the user's expenses for a specific category
 function ExpensesScreen({ params }: any) {
@@ -96,6 +109,24 @@ function ExpensesScreen({ params }: any) {
         setExpensesList(result); // Sets the fetched expenses list into the state
     };
 
+    /**
+     * Use to Delete Category
+     */
+    const deleteCategory = async () => {
+
+        const deleteExpenseResult = await db.delete(Expenses)
+            .where(eq(Expenses.categoryId, params.id))
+            .returning()
+
+        if (deleteExpenseResult) {
+            const result = await db.delete(Categories)
+                .where(eq(Categories.id, params.id))
+                .returning();
+        }
+        toast('Category Deleted!');
+        route.replace('/dashboard/categories')
+    }
+
 
     return (
         <div className='p-10'>
@@ -104,6 +135,27 @@ function ExpensesScreen({ params }: any) {
                     <ArrowLeft onClick={() => route.back()} className='cursor-pointer' />
                     My Expenses
                 </span>
+                <div className='flex gap-2 items-center'>
+                <EditCategory categoryInfo={categoryInfo} refreshData={()=>getCategoryInfo()}/>
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button className='flex gap-2' variant="destructive"> <Trash /> Delete</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete your current budget along with expenses
+                                and remove your data from our servers.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => deleteCategory()}>Continue</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+                </div>
             </h2>
             <div className='grid grid-cols-1 md:grid-cols-2 mt-6 gap-5'>
                 {categoryInfo ? (
