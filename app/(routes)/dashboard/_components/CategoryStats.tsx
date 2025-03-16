@@ -1,11 +1,27 @@
+/**
+Prologue:
+Name of Program: app/(routes)/dashboard/_components/CategoryStats.tsx
+Description: Provides CategoryStats JSX Component. 
+Inputs: None
+Outputs: Exports CategoryStats component to display CategoryStats
+Author: Kristin Boeckmann, Zach Alwin, Shravya Mehta, Lisa Phan, Vinayak Jha
+Creation Date: 03/09/2025
+ */
 "use client";
+// Import React
 import React from 'react';
 
+// Define type
 interface CategoryStatsProps {
   categoryList: any[];
   totalIncome: number;
 }
 
+// Name: Categories
+// Author: Kristin Boeckmann
+// Date: 03/09/2025
+// Preconditions: categoryList, and total income (as defined in CategoryStatsProps)
+// Postconditions: JSX Component to show the category stats
 function CategoryStats({ categoryList, totalIncome }: CategoryStatsProps) {
   // Calculate progress percentage for each category
   const calculateProgressPerc = (totalSpend: number) => {
@@ -19,9 +35,11 @@ function CategoryStats({ categoryList, totalIncome }: CategoryStatsProps) {
   return (
     <div className='w-full'>
       {categoryList.map((category) => {
-        
+        // Assign the budget amount
         const budgetAmount = category.budgetAmount !== null ? parseFloat(category.budgetAmount) : 0;
+        // Assign the total expenses
         const totalSpend = category.totalExpenses ?? 0;
+        // Compute the percentage for the progress bar
         const progressPercentage = calculateProgressPerc(totalSpend);
 
         return (
@@ -53,4 +71,5 @@ function CategoryStats({ categoryList, totalIncome }: CategoryStatsProps) {
   );
 }
 
+// Export CategoryStats
 export default CategoryStats;
