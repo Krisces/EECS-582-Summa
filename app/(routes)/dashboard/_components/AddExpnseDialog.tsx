@@ -1,8 +1,8 @@
-"use client"
+"use client" // Enables client-side rendering for Next.js
 
 import * as React from "react"
 import { useState } from 'react'
-import { useUser } from '@clerk/nextjs';
+import { useUser } from '@clerk/nextjs'; // Importing authentication hook from Clerk
 import {
     Dialog,
     DialogClose,
@@ -12,7 +12,7 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog" // Importing UI components for modal dialogs
 import {
     Command,
     CommandEmpty,
@@ -20,42 +20,40 @@ import {
     CommandInput,
     CommandItem,
     CommandList,
-  } from "@/components/ui/command"
+  } from "@/components/ui/command" // Importing command UI components
   import {
     Popover,
     PopoverContent,
     PopoverTrigger,
-  } from "@/components/ui/popover"
+  } from "@/components/ui/popover" // Importing popover components for dropdown selection
 import { Input } from '@/components/ui/input'
-import { Check, ChevronsUpDown } from "lucide-react"
+import { Check, ChevronsUpDown } from "lucide-react" // Icons for UI enhancements
 import { Button } from '@/components/ui/button';
-import { db } from '@/utils/dbConfig';
-import { Categories, Expenses, Income } from '@/utils/schema';
-import { DatePicker } from "@/components/ui/DatePicker"
-import moment from 'moment';
-import { cn } from "@/lib/utils"
-import { toast } from "sonner"
+import { db } from '@/utils/dbConfig'; // Database configuration import
+import { Categories, Expenses } from '@/utils/schema'; // Importing schema for database tables
+import { DatePicker } from "@/components/ui/DatePicker" // Date picker component
+import moment from 'moment'; // Moment.js for date formatting
+import { cn } from "@/lib/utils" // Utility functions
+import { toast } from "sonner" // Toast notifications
 
 function AddExpenseDialog({ refreshData }: any) {
-
-    const [name, setName] = useState<string>('');
-    const [amount, setAmount] = useState<string>('');
-    const [categories, setCategories] = useState<{ value: string; label: string; icon: string }[]>([]);
-    const [transactionDate, setTransactionDate] = useState<Date | undefined>(undefined);
-    const [selectedCategory, setSelectedCategory] = useState<string>('');
-    const [open, setOpen] = useState(false);
-    const { user } = useUser();
-
+    const [name, setName] = useState<string>(''); // State for expense name
+    const [amount, setAmount] = useState<string>(''); // State for expense amount
+    const [categories, setCategories] = useState<{ value: string; label: string; icon: string }[]>([]); // State for available categories
+    const [transactionDate, setTransactionDate] = useState<Date | undefined>(undefined); // State for transaction date
+    const [selectedCategory, setSelectedCategory] = useState<string>(''); // State for selected category
+    const [open, setOpen] = useState(false); // State to control popover open/close
+    const { user } = useUser(); // Retrieves user information from Clerk authentication
 
     React.useEffect(() => {
-        // Fetch categories from the database
+        // Fetch categories from the database when component mounts
         const fetchCategories = async () => {
             try {
                 const result = await db.select().from(Categories);
                 const categoryOptions = result.map((category) => ({
                     value: category.id.toString(),
                     label: category.name,
-                    icon: category.icon || "",  // Ensure you have an icon URL or class here
+                    icon: category.icon || "", // Ensures an icon exists
                 }));
                 setCategories(categoryOptions);
             } catch (error) {
@@ -68,9 +66,9 @@ function AddExpenseDialog({ refreshData }: any) {
 
     const addNewExpense = async () => {
         if (user) {
-            const categoryIdInt = parseInt(selectedCategory, 10);
+            const categoryIdInt = parseInt(selectedCategory, 10); // Convert category ID to integer
 
-            // Format the date as MM-DD-YYYY
+            // Format the transaction date as MM-DD-YYYY
             const formattedDate = transactionDate ? moment(transactionDate).format('MM-DD-YYYY') : '';
 
             const result = await db.insert(Expenses).values({
@@ -78,13 +76,13 @@ function AddExpenseDialog({ refreshData }: any) {
                 amount: amount,
                 categoryId: categoryIdInt,
                 createdAt: formattedDate, // Use the formatted date
-                createdBy: user?.primaryEmailAddress?.emailAddress as string,
+                createdBy: user?.primaryEmailAddress?.emailAddress as string, // Store user email
             }).returning({ insertedId: Expenses.id });
 
             console.log(result);
             if (result) {
-                refreshData();
-                toast('New Expense Added!');
+                refreshData(); // Refresh data after inserting a new expense
+                toast('New Expense Added!'); // Show success notification
             }
         }
     };
@@ -102,6 +100,7 @@ function AddExpenseDialog({ refreshData }: any) {
                         <DialogTitle>Add Expense</DialogTitle>
                         <DialogDescription>
                             <div className='mt-5'>
+                                {/* Expense Name Input */}
                                 <div className='mt-3'>
                                     <h2 className='text-black font-medium my-1'>
                                         Expense Name
@@ -112,6 +111,7 @@ function AddExpenseDialog({ refreshData }: any) {
                                         onChange={(e) => { setName(e.target.value) }}
                                     />
                                 </div>
+                                {/* Expense Category Selection */}
                                 <div>
                                     <h2 className='text-black font-medium my-1'>
                                         Expense Category
@@ -161,6 +161,7 @@ function AddExpenseDialog({ refreshData }: any) {
                                         </PopoverContent>
                                     </Popover>
                                 </div>
+                                {/* Expense Amount Input */}
                                 <div className='mt-3'>
                                     <h2 className='text-black font-medium my-1'>
                                         Income Amount in $
@@ -171,6 +172,7 @@ function AddExpenseDialog({ refreshData }: any) {
                                         onChange={(e) => { setAmount(e.target.value) }}
                                     />
                                 </div>
+                                {/* Transaction Date Picker */}
                                 <div className='mt-3'>
                                     <h2 className='text-black font-medium my-1'>
                                         Transaction Date
