@@ -1,17 +1,36 @@
+/**
+Prologue:
+Name of Program: app/(routes)/dashboard/_components/CategoryChart.tsx
+Description: Provides CategoryChart JSX Component.
+Inputs: None
+Outputs: Exports CategoryChart component to display the chart
+Author: Kristin Boeckmann, Zach Alwin, Shravya Mehta, Lisa Phan, Vinayak Jha
+Creation Date: 03/09/2025
+ */
 "use client";
+// Import React
 import React from 'react';
+// Import Doughnut for the chart
 import { Doughnut } from 'react-chartjs-2';
+// Import various components for the chart
 import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 
+// Register the components
 ChartJS.register(Title, Tooltip, Legend, ArcElement);
 
+// Define the typs
 interface CategoryChartProps {
   categoryList: {
-    name: string;
-    totalExpenses: number;
+    name: string;           // Name of the category
+    totalExpenses: number;  // Total expenses
   }[];
 }
 
+// Name: CategoryChart
+// Author: Shravya Mehta
+// Date: 03/09/2025
+// Preconditions: categoryList
+// Postconditions: JSX Component to show the chart
 const CategoryChart: React.FC<CategoryChartProps> = ({ categoryList }) => {
   // Calculate total expenses
   const totalExpenses = categoryList.reduce((sum, category) => sum + (category.totalExpenses || 0), 0);
@@ -63,4 +82,5 @@ const CategoryChart: React.FC<CategoryChartProps> = ({ categoryList }) => {
   );
 };
 
+// Export the CategoryChart components
 export default CategoryChart;
