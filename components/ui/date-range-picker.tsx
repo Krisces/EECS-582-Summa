@@ -1,6 +1,23 @@
+/*
+Prologue Comments
+Name: DateRangePicker.tsx
+Description: A React component for selecting a range of dates with optional comparison functionality.
+Programmers: Zach Alwin, Kisten Bockmann, Lisa Phan, Vinayak Jha, Shravya Matta
+Date Created: 3-15-2025
+Last Modified: 3-16-2025
+Preconditions: This should be used with a react application
+Postconditions: This component will allow users to select a range of dates and compare it with another range. It also provides preset date ranges for Selection
+Error and Exceptions: The component handles invalid date inputs and ensures that the end date is always after the start date. 
+It also handles edge cases like leap years and timezone differences.
+Side Effects: The component uses local state to manage the selected date range and comparison range.
+Invariants: The start date should always be less than or equal to the end date. 
+The comparison start date should always be less than or equal to the comparison end date.
+Known Faults: N/A
+*/
 /* eslint-disable max-lines */
 'use client'
 
+// Import necessary modules and components from React and other libraries
 import React, { type FC, useState, useEffect, useRef, JSX } from 'react'
 import { Button } from './button'
 import { Popover, PopoverContent, PopoverTrigger } from './popover'
@@ -14,10 +31,11 @@ import {
   SelectTrigger,
   SelectValue
 } from './select'
+
+// Import utility functions and components
 import { Switch } from './switch'
 import { ChevronUpIcon, ChevronDownIcon, CheckIcon } from '@radix-ui/react-icons'
 import { cn } from '@/lib/utils'
-
 export interface DateRangePickerProps {
   /** Click handler for applying the updates from DateRangePicker. */
   onUpdate?: (values: { range: DateRange, rangeCompare?: DateRange }) => void
@@ -37,6 +55,7 @@ export interface DateRangePickerProps {
   showCompare?: boolean
 }
 
+// Define the formatDate function to format dates based on locale
 const formatDate = (date: Date, locale: string = 'en-us'): string => {
   return date.toLocaleDateString(locale, {
     month: 'short',
@@ -45,6 +64,7 @@ const formatDate = (date: Date, locale: string = 'en-us'): string => {
   })
 }
 
+// Define the getDateAdjustedForTimezone function to adjust date for timezone differences
 const getDateAdjustedForTimezone = (dateInput: Date | string): Date => {
   if (typeof dateInput === 'string') {
     // Split the date string to get year, month, and day parts
@@ -59,11 +79,13 @@ const getDateAdjustedForTimezone = (dateInput: Date | string): Date => {
   }
 }
 
+// Define the DateRange interface to represent a range of dates
 interface DateRange {
   from: Date
   to: Date | undefined
 }
 
+// Define the Preset interface to represent a date range preset
 interface Preset {
   name: string
   label: string
@@ -124,6 +146,7 @@ export const DateRangePicker: FC<DateRangePickerProps> & {
     typeof window !== 'undefined' ? window.innerWidth < 960 : false
   )
 
+  // Effect to update the isSmallScreen state on window resize
   useEffect(() => {
     const handleResize = (): void => {
       setIsSmallScreen(window.innerWidth < 960)
@@ -137,6 +160,7 @@ export const DateRangePicker: FC<DateRangePickerProps> & {
     }
   }, [])
 
+  // Effect to reset the values when initial props change
   const getPresetRange = (presetName: string): DateRange => {
     const preset = PRESETS.find(({ name }) => name === presetName)
     if (!preset) throw new Error(`Unknown date range preset: ${presetName}`)
@@ -198,6 +222,7 @@ export const DateRangePicker: FC<DateRangePickerProps> & {
     return { from, to }
   }
 
+  // Effect to reset values when initial props change
   const setPreset = (preset: string): void => {
     const range = getPresetRange(preset)
     setRange(range)
@@ -220,6 +245,7 @@ export const DateRangePicker: FC<DateRangePickerProps> & {
     }
   }
 
+  // Effect to check if the selected preset matches the current date range
   const checkPreset = (): void => {
     for (const preset of PRESETS) {
       const presetRange = getPresetRange(preset.name)
@@ -248,6 +274,7 @@ export const DateRangePicker: FC<DateRangePickerProps> & {
     setSelectedPreset(undefined)
   }
 
+  // Effect to reset values when initial props change
   const resetValues = (): void => {
     setRange({
       from:
@@ -281,10 +308,12 @@ export const DateRangePicker: FC<DateRangePickerProps> & {
     )
   }
 
+  // Effect to check if the selected preset matches the current date range
   useEffect(() => {
     checkPreset()
   }, [range])
 
+  // Effect to reset values when initial props change
   const PresetButton = ({
     preset,
     label,
@@ -319,6 +348,7 @@ export const DateRangePicker: FC<DateRangePickerProps> & {
     )
   }
 
+  // Effect to update the openedRangeRef when the popover is open
   useEffect(() => {
     if (isOpen) {
       openedRangeRef.current = range
@@ -326,6 +356,7 @@ export const DateRangePicker: FC<DateRangePickerProps> & {
     }
   }, [isOpen])
 
+  // Effect to reset values when initial props change
   return (
     <Popover
       modal={true}
@@ -555,6 +586,7 @@ export const DateRangePicker: FC<DateRangePickerProps> & {
   )
 }
 
+// Set display name and file path for the component
 DateRangePicker.displayName = 'DateRangePicker'
 DateRangePicker.filePath =
   'libs/shared/ui-kit/src/lib/date-range-picker/date-range-picker.tsx'
