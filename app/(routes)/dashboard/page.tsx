@@ -1,3 +1,12 @@
+/**
+Prologue:
+Name of Program: app/(routes)/dashboard/page.tsx
+Description: Provides Dashboard JSX Component.
+Inputs: None
+Outputs: Exports Dashboard component to show the dashboard
+Author: Kristin Boeckmann, Zach Alwin, Shravya Mehta, Lisa Phan, Vinayak Jha
+Creation Date: 02/16/2025
+ */
 "use client";
 import { useUser } from '@clerk/nextjs';
 import React, { useEffect, useState } from 'react';
