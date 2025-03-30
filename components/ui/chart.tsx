@@ -1,13 +1,31 @@
+/*
+Prologue Comments
+Name: Chart.tsx
+Description: This file defines a Chart component using Recharts, a composable charting library for React.
+Programmers: Zach Alwin, Kisten Bockmann, Lisa Phan, Vinayak Jha, Shravya Matta
+Date Created: 3-29-2025
+Last Modified: 3-30-2025
+Preconditions: This component requires the Recharts library to be installed in your project. It also assumes that you have a React environment set up.
+Postconditions: The Chart component will render a responsive chart with a customizable configuration. It provides a context for child components to 
+access the chart configuration and allows for tooltips and legends to be displayed based on the data provided.
+Side Effects: The component uses a context to provide the chart configuration to its children. 
+This allows for nested components to access the configuration without having to pass it down through props.
+Invariants: The Chart component must be used within a ChartContainer to provide the necessary context.
+Known Faults: N/A
+*/
 "use client"
 
+// Import necessary modules and components
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
 
 import { cn } from "@/lib/utils"
 
+// Define themes for the chart
 // Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { light: "", dark: ".dark" } as const
 
+// This type defines the available themes for the chart.
 export type ChartConfig = {
   [k in string]: {
     label?: React.ReactNode
@@ -18,12 +36,15 @@ export type ChartConfig = {
   )
 }
 
+// Define the context properties for the chart
 type ChartContextProps = {
   config: ChartConfig
 }
 
+// Create a React context for the chart
 const ChartContext = React.createContext<ChartContextProps | null>(null)
 
+// Custom hook to use the chart context
 function useChart() {
   const context = React.useContext(ChartContext)
 
@@ -34,6 +55,7 @@ function useChart() {
   return context
 }
 
+// Define the ChartContainer component
 const ChartContainer = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
@@ -67,6 +89,7 @@ const ChartContainer = React.forwardRef<
 })
 ChartContainer.displayName = "Chart"
 
+// Define the ChartStyle component for applying styles
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   const colorConfig = Object.entries(config).filter(
     ([_, config]) => config.theme || config.color
@@ -100,8 +123,10 @@ ${colorConfig
   )
 }
 
+// Define the ChartTooltip component
 const ChartTooltip = RechartsPrimitive.Tooltip
 
+// Define the ChartTooltipContent component for custom tooltips
 const ChartTooltipContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
@@ -256,8 +281,10 @@ const ChartTooltipContent = React.forwardRef<
 )
 ChartTooltipContent.displayName = "ChartTooltip"
 
+// Define the ChartLegend component
 const ChartLegend = RechartsPrimitive.Legend
 
+// Define the ChartLegendContent component for custom legends
 const ChartLegendContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> &
@@ -316,7 +343,7 @@ const ChartLegendContent = React.forwardRef<
 )
 ChartLegendContent.displayName = "ChartLegend"
 
-// Helper to extract item config from a payload.
+// Helper function to extract item configuration from a payload
 function getPayloadConfigFromPayload(
   config: ChartConfig,
   payload: unknown,
@@ -355,6 +382,7 @@ function getPayloadConfigFromPayload(
     : config[key as keyof typeof config]
 }
 
+// Export all components
 export {
   ChartContainer,
   ChartTooltip,
