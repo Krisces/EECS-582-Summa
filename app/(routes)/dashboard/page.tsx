@@ -7,7 +7,47 @@ Outputs: Exports Dashboard component to show the dashboard
 Author: Kristin Boeckmann, Zach Alwin, Shravya Mehta, Lisa Phan, Vinayak Jha
 Creation Date: 02/16/2025
  */
+/**
+ * Name: Dashboard Page
+ * 
+ * Description: The main dashboard page for the application. 
+ * Displays financial overview including income, expenses, category breakdowns,
+ * historical data visualization, and recent transactions. Integrates with 
+ * Clerk for authentication and Drizzle ORM for database operations.
+ * 
+ * Programmer: Kristin Boeckmann, Zach Alwin, Shravya Mehta, Lisa Phan, Vinayak Jha
+ * Created: 02/16/2025
+ * Revisions:
+ *    03/29/2025 - Implement addBarCHartData - Kristin Boeckmann
+ * 
+ * Preconditions:
+ *  - User must be authenticated via Clerk
+ *  - Database connection must be properly configured
+ * 
+ * Acceptable Input:
+ * - Authenticated user session
+ * - Valid date ranges for financial data queries
+ * 
+ * Unacceptable Input:
+ * - Unauthenticated access attempts
+ * - Invalid date ranges
+ * 
+ * Returns:
+ * - React component rendering the dashboard UI
+ * 
+ * Errors handling:
+ * - Authentication errors will be handled by Clerk
+ * 
+ * Side Effects: N/A 
+ * 
+ * Invariants:
+ *  - Financial calculations remain consistent
+ *  - Data visualizations maintain proportional accuracy
+ * 
+ * Known Faults: N/A
+ */
 "use client";
+// Imports required libraries and components
 import { useUser } from '@clerk/nextjs';
 import React, { useEffect, useState } from 'react';
 import { differenceInDays, startOfMonth } from 'date-fns';
@@ -29,6 +69,9 @@ import AddIncome from './_components/AddIncome';
 import ExpenseListTable from './expenses/_components/ExpenseListTable';
 import Head from 'next/head';
 
+/**
+ * States management for user data and financial information
+ */
 function Page() {
   const { user } = useUser();
   const [categoryList, setCategoryList] = useState<any[]>([]);
@@ -43,8 +86,8 @@ function Page() {
   const [months, setMonths] = useState<number[]>([]); // For month numbers
   const [years, setYears] = useState<number[]>([]); // For year numbers
   const [period, setPeriod] = useState({ year: new Date().getFullYear(), month: new Date().getMonth() + 1 });
-  const [timeframe, setTimeframe] = useState<'year' | 'month'>('year');
-  const [barChartData, setBarChartData] = useState<any[]>([]);
+  const [timeframe, setTimeframe] = useState<'year' | 'month'>('year'); // Timeframe for charts
+  const [barChartData, setBarChartData] = useState<any[]>([]); // Data for bar chart
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
@@ -62,7 +105,10 @@ function Page() {
     }
   }, [user, dateRange]);
 
-
+  /**
+   * Fetches category list with associated expense totals
+   * Calculates and sets the total expenses across all categories
+   */
 
   const getCategoryList = async () => {
     try {
@@ -100,7 +146,9 @@ function Page() {
     }
   };
 
-
+   /**
+   * Fetches total income for the current user within the selected date range
+   */
   const getTotalIncome = async () => {
     try {
       const formattedFromDate = moment(dateRange.from).format('MM-DD-YYYY'); // Format from date
@@ -194,7 +242,8 @@ function Page() {
       getAvailablePeriods();
     }
   }, [user]);
-
+  
+  // Interface for bar chart data structure
   interface BarChartData {
     day: number;
     month: number;
@@ -202,7 +251,11 @@ function Page() {
     totalIncome: number;
     totalExpenses: number;
   }
-
+ 
+  /**
+   * Fetches data for the bar chart based on selected timeframe 
+   * Handles monthly and daily data aggregation
+   */
   const getBarChartData = async () => {
     if (!user) return;
 
@@ -215,12 +268,12 @@ function Page() {
 
         // Fetch daily data for the selected month
         result = await db
-          .select({
+          .select({ // Complex query joining generated days with actual data
             day: sql`all_days.day`,
             totalIncome: sql`COALESCE(income_data.total_income, 0)::NUMERIC AS totalIncome`,
             totalExpenses: sql`COALESCE(expenses_data.total_expenses, 0)::NUMERIC AS totalExpenses`
           })
-          .from(
+          .from( // Generates a series of all days in the month as base data
             sql`(SELECT generate_series(1, ${daysInMonth.length}) AS day) AS all_days`
           )
           .leftJoin(
@@ -232,9 +285,9 @@ function Page() {
                     AND EXTRACT(YEAR FROM TO_DATE(${Income.transactionDate}, 'MM-DD-YYYY')) = ${period.year} 
                     AND EXTRACT(MONTH FROM TO_DATE(${Income.transactionDate}, 'MM-DD-YYYY')) = ${period.month}
                     GROUP BY day) AS income_data`,
-            sql`all_days.day = income_data.day`
+            sql`all_days.day = income_data.day` // Join condition
           )
-          .leftJoin(
+          .leftJoin( // Left join with income data subquery
             sql`(SELECT 
                         EXTRACT(DAY FROM TO_DATE(${Expenses.createdAt}, 'MM-DD-YYYY')) AS day, 
                         SUM(${Expenses.amount}) AS total_expenses 
@@ -246,9 +299,10 @@ function Page() {
                     GROUP BY day) AS expenses_data`,
             sql`all_days.day = expenses_data.day`
           )
-          .orderBy(sql`all_days.day`)
+          .orderBy(sql`all_days.day`) // Orders results by day
           .execute();
-
+        
+        // Initializes daily data with zeros
         const dailyData = daysInMonth.map(day => ({
           month: period.month,
           year: period.year,
@@ -256,14 +310,15 @@ function Page() {
           totalIncome: 0,
           totalExpenses: 0,
         }));
-
+ 
+        // Merges query results with initialized data
         result.forEach(item => {
           const typedItem = item as BarChartData;
           dailyData[typedItem.day - 1] = {
             month: period.month,
             year: period.year,
             day: typedItem.day,
-            totalIncome: Number(typedItem.totalIncome),
+            totalIncome: Number(typedItem.totalIncome), // Converts string values to numbers
             totalExpenses: Number(typedItem.totalExpenses),
           };
         });
@@ -292,13 +347,15 @@ function Page() {
         if (result.length === 0) {
           console.warn("No data found for the selected year.");
         }
-
+ 
+        // Initializes monthly data with zeros
         const allMonthsData = monthNames.map((month) => ({
           name: month,
           Income: 0,
           Expenses: 0,
         }));
 
+        // Merges query results with initialized data
         result.forEach(item => {
           allMonthsData[item.month - 1] = {
             name: monthNames[item.month - 1],
@@ -306,7 +363,7 @@ function Page() {
             Expenses: Number(item.totalExpenses),
           };
         });
-
+        // Updates state with the formatted monthly data
         setBarChartData(allMonthsData);
         console.log("Monthly Data for Year:", allMonthsData);
       }
@@ -319,6 +376,10 @@ function Page() {
     getBarChartData(); // Call the function to fetch bar chart data whenever period or timeframe changes
   }, [period, timeframe]); // Dependency array includes period and timeframe
 
+  /**
+   * Fetches all expenses for the current user
+   * Includes category information
+   */
   const getAllExpenses = async () => {
     try {
       const result = await db
