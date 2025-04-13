@@ -10,66 +10,88 @@ Author: Kristin Boeckmann, Zach Alwin, Shravya Mehta, Lisa Phan, Vinayak Jha
 Creation Date: 02/26/2025
 */
 
-// Import React and used hooks
-import React, { useEffect, useState } from 'react'
-// Import CreateCategory
-import CreateCategory from './CreateCategory'
-// Import db connection
-import { db } from '@/utils/dbConfig'
-// Import SQL functions
-import { desc, eq, getTableColumns, sql } from 'drizzle-orm'
-// Import tables
-import { Categories, Expenses } from '@/utils/schema'
-// Import useUser hook
-import { useUser } from '@clerk/nextjs'
-// Import CategoryItem
-import CategoryItem from './CategoryItem'
+"use client";
+import React, { useEffect, useState } from 'react';
+import CreateCategory from './CreateCategory';
+import { db } from '@/utils/dbConfig';
+import { desc, eq, getTableColumns, sql } from 'drizzle-orm';
+import { Categories, Expenses } from '@/utils/schema';
+import { useUser } from '@clerk/nextjs';
+import CategoryItem from './CategoryItem';
+import { useDateRange } from '@/context/DateRangeContext'; // Import the hook
+import moment from 'moment';
 
-// Name: CategoryList
-// Author: Shravya Mehta
-// Date: 02/26/2025
-// Preconditions: None
-// Postconditions: JSX Component to show the categories
 function CategoryList() {
-
-  // Define categoryList state
   const [categoryList, setCategoryList] = useState<any[]>([]);
-  // Use user hook
   const { user } = useUser();
-  // Setup useEffect and get the categories
+  const { dateRange } = useDateRange(); // Get the date range from the context
+
+  // Fetch categories on mount and when dateRange changes
   useEffect(() => {
-    // If the user is defined, get the categories
-    user && getCategoryList();
-  }, [user])
+    if (user) {
+      getCategoryList(dateRange);
+    }
+  }, [user, dateRange]); // Add dateRange as a dependency
+
+  // Fetch categories on component mount
+  useEffect(() => {
+    if (user) {
+      getCategoryList(dateRange);
+    }
+  }, []); /// Empty dependency array ensures this runs only once on mount
 
   /**
    * Used to get category list
    */
-  const getCategoryList = async () => {
+  const getCategoryList = async (dateRange: { from: Date; to: Date }) => {
+    // Format dates as MM-DD-YYYY
+    const formattedFromDate = moment(dateRange.from).format('MM-DD-YYYY'); // Format from date
+    const formattedToDate = moment(dateRange.to).format('MM-DD-YYYY'); // Format to date
 
-    // Construct the sql query to get the categories
-    const result = await db.select({
+    console.log("Fetching categories for date range:", formattedFromDate, "to", formattedToDate); // Debugging
+
+    // Fetch all categories
+    const categories = await db.select({
       ...getTableColumns(Categories),
-      totalSpend: sql`sum(${Expenses.amount})`.mapWith(Number),
-      totalItem: sql`count(${Expenses.id})`.mapWith(Number)
     })
       .from(Categories)
-      .leftJoin(Expenses, eq(Categories.id, Expenses.categoryId))
       .where(eq(Categories.createdBy, user?.primaryEmailAddress?.emailAddress as string))
-      .groupBy(Categories.id)
-      .orderBy(desc(Categories.id))
+      .orderBy(desc(Categories.id));
 
-    console.log(result); // Debugging output
+    // Fetch expenses for each category and calculate totalSpend and totalItem
+    const categoriesWithExpenses = await Promise.all(
+      categories.map(async (category) => {
+        const expenses = await db.select({
+          amount: Expenses.amount,
+        })
+          .from(Expenses)
+          .where(
+            sql`${Expenses.categoryId} = ${category.id}
+              AND ${Expenses.createdAt} >= ${formattedFromDate}
+              AND ${Expenses.createdAt} <= ${formattedToDate}`
+          )
+          .execute();
 
-    // Set the category list
-    setCategoryList(result);
-  }
+          const totalSpend = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
+        const totalItem = expenses.length;
 
-  // Return the JSX
+        return {
+          ...category,
+          totalSpend,
+          totalItem,
+        };
+      })
+    );
+
+    console.log("Fetched categories with expenses:", categoriesWithExpenses); // Debugging
+
+    setCategoryList(categoriesWithExpenses);
+  };
+
   return (
     <div className='mt-7'>
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5'>
-        <CreateCategory refreshData={() => getCategoryList()} />
+        <CreateCategory refreshData={() => getCategoryList(dateRange)} />
         {categoryList?.length > 0 ? categoryList.map((category, index) => (
           <CategoryItem category={category} key={index} />
         ))
@@ -80,8 +102,6 @@ function CategoryList() {
       </div>
     </div>
   );
-
 }
 
-// Export CategoryList component
-export default CategoryList
+export default CategoryList;
