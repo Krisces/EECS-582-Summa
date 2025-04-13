@@ -29,6 +29,16 @@
  * - If fetching categories fails, an error is logged to the console.
  * - If required fields are missing, the submit button is disabled.
  * - If database insertion fails, an error message could be added (not implemented here).
+ * 
+ * Side Effects:
+ * - Reads from and writes to the database.
+ * - Displays a toast notification.
+ * 
+ * Invariants:
+ * - User and category data are expected to be defined when used.
+ * - Component assumes that db, Categories, and Expenses are correctly imported and configured.
+ * 
+ * Known Faults: N/A
  */
 
 import { Button } from '@/components/ui/button';
@@ -66,10 +76,10 @@ function AddExpense({ categoryId, user, refreshData }: AddExpenseProps) {
 
   const [name, setName] = useState<string>('');
   const [amount, setAmount] = useState<string>('');
-  const [categories, setCategories] = useState<{ value: string; label: string; icon: string }[]>([]);
-  const [transactionDate, setTransactionDate] = useState<Date | undefined>(undefined);
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [open, setOpen] = useState(false);
+  const [categories, setCategories] = useState<{ value: string; label: string; icon: string }[]>([]); // Categories for dropdown
+  const [transactionDate, setTransactionDate] = useState<Date | undefined>(undefined); // Selected date
+  const [selectedCategory, setSelectedCategory] = useState<string>(''); // Selected category ID
+  const [open, setOpen] = useState(false); // Dropdown popover state
 
   useEffect(() => {
     // Fetch categories from the database
@@ -91,12 +101,12 @@ function AddExpense({ categoryId, user, refreshData }: AddExpenseProps) {
   }, []);
 
   const addNewExpense = async () => {
-    const categoryIdInt = parseInt(selectedCategory, 10);
+    const categoryIdInt = parseInt(selectedCategory, 10); // Converts category to number
 
     // Format the date as MM-DD-YYYY
     const formattedDate = transactionDate ? moment(transactionDate).format('MM-DD-YYYY') : '';
 
-    const result = await db.insert(Expenses)
+    const result = await db.insert(Expenses) // Inserts expense
       .values({
         name: name,
         amount: amount,
@@ -112,6 +122,7 @@ function AddExpense({ categoryId, user, refreshData }: AddExpenseProps) {
     }
   };
 
+  // JSX return
   return (
     <div className='border p-5 rounded-lg'>
       <h2 className='font-bold text-lg'>
@@ -199,4 +210,4 @@ function AddExpense({ categoryId, user, refreshData }: AddExpenseProps) {
   )
 }
 
-export default AddExpense
+export default AddExpense // Exports the component
