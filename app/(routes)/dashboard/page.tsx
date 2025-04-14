@@ -8,54 +8,63 @@ Author: Kristin Boeckmann, Zach Alwin, Shravya Mehta, Lisa Phan, Vinayak Jha
 Creation Date: 02/16/2025
  */
 "use client";
-import { useUser } from '@clerk/nextjs';
-import React, { useEffect, useState } from 'react';
-import { startOfMonth } from 'date-fns';
-import CardInfo from './_components/CardInfo';
-import { Skeleton } from "@/components/ui/skeleton";
-import { db } from '@/utils/dbConfig';
-import { Categories, Expenses, Income } from '@/utils/schema';
-import { desc, eq, getTableColumns, sql } from 'drizzle-orm';
-import moment from 'moment';
-import CategoryStats from './_components/CategoryStats';
-import CategoryChart from './_components/CategoryChart';
-import HistoryPeriodSelector from './_components/HistoryPeriodSelector';
-import { Badge } from '@/components/ui/badge';
-import { Bar, BarChart, Tooltip, XAxis, YAxis, ResponsiveContainer } from "recharts";
-import { ChartConfig, ChartContainer } from "@/components/ui/chart";
-import Overview from './_components/Overview';
-import AddExpenseDialog from './_components/AddExpnseDialog';
-import AddIncome from './_components/AddIncome';
-import ExpenseListTable from './expenses/_components/ExpenseListTable';
-import { useDateRange } from '@/context/DateRangeContext';
+import { useUser } from '@clerk/nextjs'; // Import useUser hook
+import React, { useEffect, useState } from 'react'; // Import React, useEffect and useState effect
+import { startOfMonth } from 'date-fns'; // Import startOfMonth
+import CardInfo from './_components/CardInfo'; // Import CardInfo component
+import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton component
+import { db } from '@/utils/dbConfig'; // Import db
+import { Categories, Expenses, Income } from '@/utils/schema'; // Import table definitions
+import { desc, eq, getTableColumns, sql } from 'drizzle-orm';  // Import sql operations
+import moment from 'moment'; // Import moment library
+import CategoryStats from './_components/CategoryStats'; // Import CategoryStats component
+import CategoryChart from './_components/CategoryChart'; // Import CategoryChart component
+import HistoryPeriodSelector from './_components/HistoryPeriodSelector'; // Import HistoryPeriodSelector component
+import { Badge } from '@/components/ui/badge'; // Import Badge component
+import { Bar, BarChart, Tooltip, XAxis, YAxis, ResponsiveContainer } from "recharts"; // Import charts component
+import { ChartConfig, ChartContainer } from "@/components/ui/chart"; // Import chart component
+import Overview from './_components/Overview'; // Import Overview component
+import AddExpenseDialog from './_components/AddExpnseDialog'; // Import AddExpensesDialog component
+import AddIncome from './_components/AddIncome'; // Import AddIncome component
+import ExpenseListTable from './expenses/_components/ExpenseListTable'; // Import ExpensesListTable component
+import { useDateRange } from '@/context/DateRangeContext'; // Import useDateRange hook
 
+// Name: Page
+// Author: Kristin Boeckmann
+// Date: 04/13/2025
+// Preconditions: None
+// Postconditions: Page JSX component
 function Page() {
-  const { user } = useUser();
-  const [categoryList, setCategoryList] = useState<any[]>([]);
-  const [expensesList, setExpensesList] = useState<any[]>([]);
-  const [totalIncome, setTotalIncome] = useState<number>(0);
-  const [totalExpenses, setTotalExpenses] = useState<number>(0);
-  const { dateRange, setGlobalDateRange } = useDateRange();
-  const [loading, setLoading] = useState<boolean>(true);
-  const [barChartLoading, setBarChartLoading] = useState<boolean>(true);
-  const [months, setMonths] = useState<number[]>([]);
-  const [years, setYears] = useState<number[]>([]);
-  
-  // Main dashboard period controls (used by HistoryPeriodSelector)
-  const [period, setPeriod] = useState({ 
-    year: new Date().getFullYear(), 
-    month: new Date().getMonth() + 1 
+  const { user } = useUser(); // Get user from the useUser hook
+  const [categoryList, setCategoryList] = useState<any[]>([]); // Define categoryList React state
+  const [expensesList, setExpensesList] = useState<any[]>([]); // Define expensesList React state
+  const [totalIncome, setTotalIncome] = useState<number>(0); // Define totalIncore React state
+  const [totalExpenses, setTotalExpenses] = useState<number>(0); // Define totalExpenses React state
+  const { dateRange, setGlobalDateRange } = useDateRange(); // Define dateRange React state
+  const [loading, setLoading] = useState<boolean>(true); // Define loading React state
+  const [barChartLoading, setBarChartLoading] = useState<boolean>(true); // Define barChartLoading React state
+  const [months, setMonths] = useState<number[]>([]); // Define months React state
+  const [years, setYears] = useState<number[]>([]); // Define years React state
+
+  // Main dashboard period controls (used by HistoryPeriodSelector) React state
+  const [period, setPeriod] = useState({
+    year: new Date().getFullYear(),
+    month: new Date().getMonth() + 1
   });
-  const [timeframe, setTimeframe] = useState<'year' | 'month'>('year');
-  
+  const [timeframe, setTimeframe] = useState<'year' | 'month'>('year'); // Define timeframe React state
+
   // Bar chart period controls - now properly synchronized
   const [barChartPeriod, setBarChartPeriod] = useState({
     year: new Date().getFullYear(),
     month: new Date().getMonth() + 1
   });
+
+  // Define barChartTimeframe React state
   const [barChartTimeframe, setBarChartTimeframe] = useState<'year' | 'month'>('year');
-  
+
+  // Define barChartData React state
   const [barChartData, setBarChartData] = useState<any[]>([]);
+  // Define month names (in order)
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
@@ -65,14 +74,17 @@ function Page() {
   useEffect(() => {
     setBarChartPeriod(period);
     setBarChartTimeframe(timeframe);
+    // Trigger the effect when period or timeframe changes
   }, [period, timeframe]);
 
   useEffect(() => {
     if (user) {
+      // Get the user data
       setLoading(true);
       Promise.all([getCategoryList(), getTotalIncome(), getAvailablePeriods(), getBarChartData()])
         .finally(() => setLoading(false));
     }
+    // Trigger the effect when user or dateRange changes
   }, [user, dateRange]);
 
   useEffect(() => {
@@ -81,6 +93,7 @@ function Page() {
       Promise.all([getCategoryList(), getTotalIncome(), getAvailablePeriods(), getBarChartData()])
         .finally(() => setLoading(false));
     }
+    // Run the previous effect just once
   }, []);
 
   const getCategoryList = async () => {
@@ -202,7 +215,7 @@ function Page() {
       const availableMonths = [...new Set(allPeriods.filter(p => p.year === currentYear).map(p => p.month))].sort((a, b) => a - b);
 
       setMonths(availableMonths); // Ensure this is a number[] and matches your state definition
-        // Set initial period to most recent available data
+      // Set initial period to most recent available data
       if (allPeriods.length > 0) {
         const mostRecent = allPeriods[0];
         setPeriod({
@@ -214,7 +227,7 @@ function Page() {
           month: mostRecent.month
         });
         setTimeframe('year');
-        setBarChartTimeframe('year');  
+        setBarChartTimeframe('year');
       }
     } catch (error) {
       console.error("Error fetching available periods:", error);
@@ -280,7 +293,7 @@ function Page() {
           .groupBy(sql`day`)
           .execute();
 
-        // Merge data
+        // Merge income data
         incomeData.forEach((item: any) => {
           const dayIndex = item.day - 1;
           if (dayIndex >= 0 && dayIndex < dailyData.length) {
@@ -288,19 +301,21 @@ function Page() {
           }
         });
 
+        // Merge expenses data
         expensesData.forEach((item: any) => {
           const dayIndex = item.day - 1;
           if (dayIndex >= 0 && dayIndex < dailyData.length) {
             dailyData[dayIndex].Expenses = Number(item.total);
           }
         });
-        
+
         console.log('Monthly data result:', dailyData);
         setBarChartData(dailyData);
       } else {
         // Fetch yearly data
         const { year } = barChartPeriod;
-        
+
+        // Get income data
         const incomeData = await db
           .select({
             month: sql<number>`EXTRACT(MONTH FROM TO_DATE(${Income.transactionDate}, 'MM-DD-YYYY')) AS month`,
@@ -314,6 +329,7 @@ function Page() {
           .groupBy(sql`month`)
           .execute();
 
+        // Get expenses data
         const expensesData = await db
           .select({
             month: sql<number>`EXTRACT(MONTH FROM TO_DATE(${Expenses.createdAt}, 'MM-DD-YYYY')) AS month`,
@@ -335,6 +351,7 @@ function Page() {
           Expenses: 0,
         }));
 
+        // Merge income data
         incomeData.forEach((item: any) => {
           const monthIndex = item.month - 1;
           if (monthIndex >= 0 && monthIndex < allMonthsData.length) {
@@ -342,6 +359,7 @@ function Page() {
           }
         });
 
+        // Merge expenses data
         expensesData.forEach((item: any) => {
           const monthIndex = item.month - 1;
           if (monthIndex >= 0 && monthIndex < allMonthsData.length) {
@@ -374,8 +392,8 @@ function Page() {
         .leftJoin(Categories, eq(Categories.id, Expenses.categoryId)) // Use leftJoin if you want all expenses
         .where(eq(Expenses.createdBy, user?.primaryEmailAddress?.emailAddress as string)) // Ensure the user is the one who created the expenses
         .orderBy(desc(Expenses.id)); // Order expenses by ID in descending order
-        
-        setExpensesList(result);
+
+      setExpensesList(result);
     } catch (error) {
       console.error("Error fetching expenses:", error);
     }
@@ -394,7 +412,7 @@ function Page() {
 
   return (
     <div>
-        <title>Summa Dashboard</title>
+      <title>Summa Dashboard</title>
       <div className="p-10">
         <div className="flex flex-col md:flex-row items-start md:items-center md:justify-between">
           <div className="mb-4 md:mb-0">
@@ -438,7 +456,7 @@ function Page() {
         <div className="p-4 border rounded-lg flex flex-col gap-4">
           {/* HistoryPeriodSelector and badges */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <HistoryPeriodSelector
+            <HistoryPeriodSelector
               period={period}
               setPeriod={setPeriod}
               timeframe={timeframe}
@@ -485,7 +503,7 @@ function Page() {
                     </>
                   ) : (
                     <>
-                      <XAxis 
+                      <XAxis
                         dataKey="name"
                         label={{ value: 'Month', position: 'insideBottomRight', offset: -5 }}
                       />
@@ -520,4 +538,5 @@ function Page() {
   );
 }
 
+// Export Page component
 export default Page;
