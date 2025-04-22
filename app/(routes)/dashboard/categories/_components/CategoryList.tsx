@@ -1,87 +1,93 @@
-"use client"
+"use client";
 
 /**
-Prologue:
-Name of Program: app/(routes)/dashboard/categories/_components/CategoryList.tsx
-Description: Provides CategoryList JSX component.
-Inputs: None
-Outputs: Exports CategoryList JSX component to display multiple categories
-Author: Kristin Boeckmann, Zach Alwin, Shravya Mehta, Lisa Phan, Vinayak Jha
-Creation Date: 02/26/2025
-*/
+ * Prologue:
+ * Name of Program: app/(routes)/dashboard/categories/_components/CategoryList.tsx
+ * Description: Provides CategoryList JSX component.
+ * Inputs: None
+ * Outputs: Exports CategoryList JSX component to display multiple categories
+ * Author: Kristin Boeckmann, Zach Alwin, Shravya Matta, Lisa Phan, Vinayak Jha
+ * Creation Date: 02/26/2025
+ */
 
-// Import React and used hooks
-import React, { useEffect, useState } from 'react'
-// Import CreateCategory
-import CreateCategory from './CreateCategory'
-// Import db connection
-import { db } from '@/utils/dbConfig'
-// Import SQL functions
-import { desc, eq, getTableColumns, sql } from 'drizzle-orm'
-// Import tables
-import { Categories, Expenses } from '@/utils/schema'
-// Import useUser hook
-import { useUser } from '@clerk/nextjs'
-// Import CategoryItem
-import CategoryItem from './CategoryItem'
+import React, { useEffect, useState } from 'react';
+import CreateCategory from './CreateCategory';
+import { db } from '@/utils/dbConfig';
+import { desc, eq, getTableColumns, sql } from 'drizzle-orm';
+import { Categories, Expenses } from '@/utils/schema';
+import { useUser } from '@clerk/nextjs';
+import CategoryItem from './CategoryItem';
+import { useDateRange } from '@/context/DateRangeContext';
+import moment from 'moment';
 
-// Name: CategoryList
-// Author: Shravya Mehta
-// Date: 02/26/2025
-// Preconditions: None
-// Postconditions: JSX Component to show the categories
 function CategoryList() {
+  const [categoryList, setCategoryList] = useState<any[]>([]); // Store categories with totals
+  const { user } = useUser(); // Get current user
+  const { dateRange } = useDateRange(); // Get selected date range
 
-  // Define categoryList state
-  const [categoryList, setCategoryList] = useState<any[]>([]);
-  // Use user hook
-  const { user } = useUser();
-  // Setup useEffect and get the categories
+  // Fetch categories whenever user or date range changes
   useEffect(() => {
-    // If the user is defined, get the categories
-    user && getCategoryList();
-  }, [user])
+    if (user) getCategoryList(dateRange);
+  }, [user, dateRange]);
 
-  /**
-   * Used to get category list
-   */
-  const getCategoryList = async () => {
+  // Fetch categories once on component mount
+  useEffect(() => {
+    if (user) getCategoryList(dateRange);
+  }, []);
 
-    // Construct the sql query to get the categories
-    const result = await db.select({
-      ...getTableColumns(Categories),
-      totalSpend: sql`sum(${Expenses.amount})`.mapWith(Number),
-      totalItem: sql`count(${Expenses.id})`.mapWith(Number)
-    })
+  // Fetch user's categories and attach expense totals
+  const getCategoryList = async (dateRange: { from: Date; to: Date }) => {
+    const formattedFromDate = moment(dateRange.from).format('MM-DD-YYYY');
+    const formattedToDate = moment(dateRange.to).format('MM-DD-YYYY');
+
+    // Get all categories created by the user
+    const categories = await db
+      .select({ ...getTableColumns(Categories) })
       .from(Categories)
-      .leftJoin(Expenses, eq(Categories.id, Expenses.categoryId))
       .where(eq(Categories.createdBy, user?.primaryEmailAddress?.emailAddress as string))
-      .groupBy(Categories.id)
-      .orderBy(desc(Categories.id))
+      .orderBy(desc(Categories.id));
 
-    console.log(result); // Debugging output
+    // For each category, fetch expenses within the date range
+    const categoriesWithExpenses = await Promise.all(
+      categories.map(async (category) => {
+        const expenses = await db
+          .select({ amount: Expenses.amount })
+          .from(Expenses)
+          .where(
+            sql`${Expenses.categoryId} = ${category.id}
+              AND ${Expenses.createdAt} >= ${formattedFromDate}
+              AND ${Expenses.createdAt} <= ${formattedToDate}`
+          )
+          .execute();
 
-    // Set the category list
-    setCategoryList(result);
-  }
+        // Calculate total amount spent and number of items
+        const totalSpend = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+        const totalItem = expenses.length;
 
-  // Return the JSX
+        return { ...category, totalSpend, totalItem };
+      })
+    );
+
+    setCategoryList(categoriesWithExpenses); // Update UI with processed data
+  };
+
   return (
     <div className='mt-7'>
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5'>
-        <CreateCategory refreshData={() => getCategoryList()} />
-        {categoryList?.length > 0 ? categoryList.map((category, index) => (
-          <CategoryItem category={category} key={index} />
-        ))
-          : [1, 2, 3, 4, 5].map((item, index) => (
-            <div key={index} className='w-full bg-slate-200 rounded-lg h-[170px] animate-pulse'></div>
-          ))
-        }
+        {/* Component to add a new category */}
+        <CreateCategory refreshData={() => getCategoryList(dateRange)} />
+
+        {/* Show categories or loading skeletons */}
+        {categoryList?.length > 0
+          ? categoryList.map((category, index) => (
+              <CategoryItem category={category} key={index} />
+            ))
+          : [1, 2, 3, 4, 5].map((_, index) => (
+              <div key={index} className='w-full bg-slate-200 rounded-lg h-[170px] animate-pulse'></div>
+            ))}
       </div>
     </div>
   );
-
 }
 
-// Export CategoryList component
-export default CategoryList
+export default CategoryList;

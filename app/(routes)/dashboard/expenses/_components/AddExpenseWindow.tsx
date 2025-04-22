@@ -29,6 +29,16 @@
  * - If fetching categories fails, an error is logged to the console.
  * - If required fields are missing, the submit button is disabled.
  * - If database insertion fails, an error message could be added (not implemented here).
+ * 
+ * Side Effects:
+ * - Reads from and writes to the database.
+ * - Displays a toast notification.
+ * 
+ * Invariants:
+ * - User and category data are expected to be defined when used.
+ * - Component assumes that db, Categories, and Expenses are correctly imported and configured.
+ * 
+ * Known Faults: N/A
  */
 
 import { Button } from '@/components/ui/button';
@@ -54,7 +64,7 @@ import {
 } from "@/components/ui/popover"
 import { DatePicker } from "@/components/ui/DatePicker"
 import moment from 'moment';
-import { eq } from 'drizzle-orm'
+import { eq } from 'drizzle-orm';
 
 interface AddExpenseProps {
   categoryId: string; // Passed as a string from parent
@@ -64,29 +74,23 @@ interface AddExpenseProps {
 
 function AddExpense({ categoryId, user, refreshData }: AddExpenseProps) {
 
- // State variables for user inputs
-  const [name, setName] = useState<string>(''); // Expense name
-  const [amount, setAmount] = useState<string>(''); // Expense amount
-  const [categories, setCategories] = useState<{ value: string; label: string; icon: string }[]>([]); // Categories list
-  const [transactionDate, setTransactionDate] = useState<Date | undefined>(undefined); // Selected transaction date
+  const [name, setName] = useState<string>('');
+  const [amount, setAmount] = useState<string>('');
+  const [categories, setCategories] = useState<{ value: string; label: string; icon: string }[]>([]); // Categories for dropdown
+  const [transactionDate, setTransactionDate] = useState<Date | undefined>(undefined); // Selected date
   const [selectedCategory, setSelectedCategory] = useState<string>(''); // Selected category ID
-  const [open, setOpen] = useState(false); // Popover state
+  const [open, setOpen] = useState(false); // Dropdown popover state
 
-  // Fetch categories when the component mounts
   useEffect(() => {
+    // Fetch categories from the database
     const fetchCategories = async () => {
       try {
-        // Query database for categories created by the user
         const result = await db.select().from(Categories).where(eq(Categories.createdBy, user?.primaryEmailAddress?.emailAddress));
-        
-        // Transform database result into dropdown-friendly format
         const categoryOptions = result.map((category) => ({
           value: category.id.toString(),
           label: category.name,
-          icon: category.icon || "",  // Ensure an icon is available
+          icon: category.icon || "",  // Ensure you have an icon URL or class here
         }));
-        
-        // Update state with fetched categories
         setCategories(categoryOptions);
       } catch (error) {
         console.error("Failed to fetch categories:", error);
@@ -94,41 +98,36 @@ function AddExpense({ categoryId, user, refreshData }: AddExpenseProps) {
     };
 
     fetchCategories();
-}, []);
+  }, []);
 
-
-  // Function to add a new expense
   const addNewExpense = async () => {
-    const categoryIdInt = parseInt(selectedCategory, 10); // Convert selected category to integer
+    const categoryIdInt = parseInt(selectedCategory, 10); // Converts category to number
 
-    // Format transaction date as MM-DD-YYYY
+    // Format the date as MM-DD-YYYY
     const formattedDate = transactionDate ? moment(transactionDate).format('MM-DD-YYYY') : '';
 
-    // Insert new expense into database
-    const result = await db.insert(Expenses)
+    const result = await db.insert(Expenses) // Inserts expense
       .values({
         name: name,
         amount: amount,
         categoryId: categoryIdInt,
-        createdAt: formattedDate,
+        createdAt: formattedDate, // Use the formatted date
         createdBy: user?.primaryEmailAddress?.emailAddress as string,
       }).returning({ insertedId: Expenses.id });
 
     console.log(result);
-    
     if (result) {
-      refreshData(); // Refresh expense list
-      toast('New Expense Added!'); // Show success message
+      refreshData();
+      toast('New Expense Added!');
     }
   };
 
+  // JSX return
   return (
     <div className='border p-5 rounded-lg'>
       <h2 className='font-bold text-lg'>
         Add Expense
       </h2>
-
-      {/* Expense Name Input */}
       <div className='mt-3'>
         <h2 className='text-black font-medium my-1'>
           Expense Name
@@ -139,8 +138,6 @@ function AddExpense({ categoryId, user, refreshData }: AddExpenseProps) {
           onChange={(e) => { setName(e.target.value) }}
         />
       </div>
-
-      {/* Expense Category Dropdown */}
       <div>
         <h2 className='text-black font-medium my-1'>
           Expense Category
@@ -206,8 +203,6 @@ function AddExpense({ categoryId, user, refreshData }: AddExpenseProps) {
         </h2>
         <DatePicker onDateChange={setTransactionDate} />
       </div>
-      
-      {/* Submit Button */}
       <Button disabled={!(name && amount && selectedCategory && transactionDate)}
         onClick={() => addNewExpense()}
         className='mt-3 w-full'>Add New Expense</Button>
@@ -215,4 +210,4 @@ function AddExpense({ categoryId, user, refreshData }: AddExpenseProps) {
   )
 }
 
-export default AddExpense
+export default AddExpense // Exports the component
