@@ -483,41 +483,41 @@ function Page() {
               <Skeleton className="w-full h-[300px]" />
             ) : barChartData.length > 0 && barChartData.some(item => item.Income > 0 || item.Expenses > 0) ? (
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={barChartData}>
-                  {barChartTimeframe === 'month' ? (
-                    <>
-                      <XAxis
-                        dataKey="day"
-                        tickFormatter={(day) => `${day}`}
-                        label={{ value: 'Day', position: 'insideBottomRight', offset: -5 }}
-                      />
-                      <YAxis />
-                      <Tooltip
-                        formatter={(value, name) => {
-                          return [`$${value}`, name === 'Income' ? 'Income' : 'Expenses'];
-                        }}
-                        labelFormatter={(day) => `Day ${day}`}
-                      />
-                      <Bar dataKey="Income" fill="#34d399" radius={4} />
-                      <Bar dataKey="Expenses" fill="#fb923c" radius={4} />
-                    </>
-                  ) : (
-                    <>
-                      <XAxis
-                        dataKey="name"
-                        label={{ value: 'Month', position: 'insideBottomRight', offset: -5 }}
-                      />
-                      <YAxis />
-                      <Tooltip
-                        formatter={(value, name) => {
-                          return [`$${value}`, name === 'Income' ? 'Income' : 'Expenses'];
-                        }}
-                      />
-                      <Bar dataKey="Income" fill="#34d399" radius={4} />
-                      <Bar dataKey="Expenses" fill="#fb923c" radius={4} />
-                    </>
-                  )}
-                </BarChart>
+
+                {barChartTimeframe === 'month' ? (
+                  <BarChart data={barChartData}>
+                    <XAxis
+                      dataKey="day"
+                      tickFormatter={(day) => `${day}`}
+                      label={{ value: 'Day', position: 'insideBottomRight', offset: -5 }}
+                    />
+                    <YAxis />
+                    <Tooltip
+                      formatter={(value, name) => {
+                        return [`$${value}`, name === 'Income' ? 'Income' : 'Expenses'];
+                      }}
+                      labelFormatter={(day) => `Day ${day}`}
+                    />
+                    <Bar dataKey="Income" fill="#34d399" radius={4} />
+                    <Bar dataKey="Expenses" fill="#fb923c" radius={4} />
+                  </BarChart>
+                ) : (
+                  <BarChart data={barChartData}>
+                    <XAxis
+                      dataKey="name"
+                      label={{ value: 'Month', position: 'insideBottomRight', offset: -5 }}
+                    />
+                    <YAxis />
+                    <Tooltip
+                      formatter={(value, name) => {
+                        return [`$${value}`, name === 'Income' ? 'Income' : 'Expenses'];
+                      }}
+                    />
+                    <Bar dataKey="Income" fill="#34d399" radius={4} />
+                    <Bar dataKey="Expenses" fill="#fb923c" radius={4} />
+                  </BarChart>
+                )}
+
               </ResponsiveContainer>
             ) : (
               <div className="flex items-center justify-center h-full">
