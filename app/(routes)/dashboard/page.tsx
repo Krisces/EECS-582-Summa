@@ -28,6 +28,7 @@ import AddExpenseDialog from './_components/AddExpnseDialog'; // Import AddExpen
 import AddIncome from './_components/AddIncome'; // Import AddIncome component
 import ExpenseListTable from './expenses/_components/ExpenseListTable'; // Import ExpensesListTable component
 import { useDateRange } from '@/context/DateRangeContext'; // Import useDateRange hook
+import Chatbot from './_components/chatbot';
 
 // Name: Page
 // Author: Kristin Boeckmann
@@ -533,7 +534,9 @@ function Page() {
       <div className="mx-10 mt-8 mb-16">
         <ExpenseListTable expensesList={expensesList} refreshData={() => getCategoryList} />
       </div>
-
+      <div>
+        <Chatbot/>
+      </div>
     </div>
   );
 }
