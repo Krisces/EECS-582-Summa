@@ -9,31 +9,37 @@ import { desc, eq, getTableColumns, sql } from 'drizzle-orm';
 export async function POST(req: Request) {
   try {
     const clonedReq = req.clone();
-    const { userId } = getAuth(new NextRequest(clonedReq));
+    const res = getAuth(new NextRequest(clonedReq));
+
+    const userId = res.userId;
 
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const { message } = await req.json();
+    const { message, email } = await req.json();
 
     if (!message) {
       return NextResponse.json({ error: 'No message provided' }, { status: 400 });
     }
 
+    if (!email) {
+      return NextResponse.json({ error: 'No email provided' }, { status: 400 });
+    }
+
     // Fetch the user's expense data
     const expenses = await db
-            .select({
-              id: Expenses.id,
-              name: Expenses.name,
-              amount: Expenses.amount,
-              createdAt: Expenses.createdAt,
-              createdBy: Expenses.createdBy,
-              categoryName: Categories.name, // Include category name if needed
-            })
-            .from(Expenses) // Start from Expenses to ensure all expenses are fetched
-            .leftJoin(Categories, eq(Categories.id, Expenses.categoryId)) // Use leftJoin if you want all expenses
-            .where(eq(Expenses.createdBy, 'lisaphan208@gmail.com')) // Ensure the user is the one who created the expenses
-            .orderBy(desc(Expenses.id));
+      .select({
+        id: Expenses.id,
+        name: Expenses.name,
+        amount: Expenses.amount,
+        createdAt: Expenses.createdAt,
+        createdBy: Expenses.createdBy,
+        categoryName: Categories.name, // Include category name if needed
+      })
+      .from(Expenses) // Start from Expenses to ensure all expenses are fetched
+      .leftJoin(Categories, eq(Categories.id, Expenses.categoryId)) // Use leftJoin if you want all expenses
+      .where(eq(Expenses.createdBy, email)) // Ensure the user is the one who created the expenses
+      .orderBy(desc(Expenses.id));
 
     // Analyze expenses
     const totalExpenses = expenses.reduce((sum, expense) => sum + parseFloat(expense.amount), 0);

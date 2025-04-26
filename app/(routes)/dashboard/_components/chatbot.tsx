@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useUser } from '@clerk/nextjs'; // Import useUser hook
 
 export default function Chatbot() {
   const [messages, setMessages] = useState<string[]>([]);
@@ -8,6 +9,8 @@ export default function Chatbot() {
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const chatRef = useRef<HTMLDivElement>(null);
+
+  const { user } = useUser();
 
   // Load messages from localStorage on mount
   useEffect(() => {
@@ -23,7 +26,7 @@ export default function Chatbot() {
 
   useEffect(() => {
     if (chatRef.current && isOpen) {
-        chatRef.current.scrollTop = chatRef.current.scrollHeight;
+      chatRef.current.scrollTop = chatRef.current.scrollHeight;
     }
   }, [messages, loading, isOpen]);
 
@@ -41,7 +44,7 @@ export default function Chatbot() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: input }),
+        body: JSON.stringify({ message: input, email: user?.primaryEmailAddress?.emailAddress as string }),
       });
 
       const data = await res.json();
@@ -59,7 +62,7 @@ export default function Chatbot() {
     <div className="fixed bottom-6 right-6 z-50">
       {isOpen ? (
         <div className="w-80 bg-white rounded-lg shadow-xl border border-gray-200 flex flex-col">
-          <div 
+          <div
             className="bg-violet-950 text-white p-3 rounded-t-lg flex justify-between items-center cursor-pointer"
             onClick={() => setIsOpen(false)}
           >
@@ -73,7 +76,7 @@ export default function Chatbot() {
               <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414L11.414 12l3.293 3.293a1 1 0 01-1.414 1.414L10 13.414l-3.293 3.293a1 1 0 01-1.414-1.414L8.586 12 5.293 8.707a1 1 0 010-1.414z" clipRule="evenodd" />
             </svg>
           </div>
-          
+
           <div
             ref={chatRef}
             className="flex-1 p-3 h-64 overflow-y-auto bg-gray-50"
@@ -92,51 +95,50 @@ export default function Chatbot() {
                     <div className="text-right text-slate-500 italic">You</div>
                   )}
                   <div className={`${msg.startsWith('You:') ? 'text-right' : 'text-left'}`}>
-                    <span className={`inline-block px-3 py-2 rounded-lg text-sm ${
-                      msg.startsWith('You:') 
-                        ? 'bg-violet-950 text-white' 
-                        : 'bg-gray-200 text-gray-800'
-                    }`}>
-                      {msg.replace('You: ', '')} 
+                    <span className={`inline-block px-3 py-2 rounded-lg text-sm ${msg.startsWith('You:')
+                      ? 'bg-violet-950 text-white'
+                      : 'bg-gray-200 text-gray-800'
+                      }`}>
+                      {msg.replace('You: ', '')}
                     </span>
                   </div>
                 </div>
               ))
             )}
-        {loading && (
+            {loading && (
               <div className="text-left">
                 <span className="inline-block px-3 py-2 rounded-lg bg-gray-200 text-gray-800 text-sm flex items-center gap-2">
                   <span className="flex space-x-1">
                     <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></span>
-                    <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></span>
-                    <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{animationDelay: '0.4s'}}></span>
+                    <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
+                    <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></span>
                   </span>
                   Assistant is typing ...
                 </span>
               </div>
             )}
-      </div>
-      <div className="p-3 border-t bg-white">
-        <div className="flex gap-2">
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-            className="flex-1 border rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            placeholder="Ask me a question ..."
-          />
-          <button
-            onClick={sendMessage}
-            disabled={loading || !input.trim()}
-            className="bg-violet-950 text-white rounded px-4 py-2 hover:bg-violet-300 disabled:opacity-50"
-          >
-            Send
-          </button>
+          </div>
+          <div className="p-3 border-t bg-white">
+            <div className="flex gap-2">
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+                className="flex-1 border rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                placeholder="Ask me a question ..."
+              />
+              <button
+                onClick={sendMessage}
+                disabled={loading || !input.trim()}
+                className="bg-violet-950 text-white rounded px-4 py-2 hover:bg-violet-300 disabled:opacity-50"
+              >
+                Send
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  ) : (
-    <button 
+      ) : (
+        <button
           onClick={() => setIsOpen(true)}
           className="bg-violet-950 text-white rounded-full p-4 shadow-lg hover:bg-violet-500 transition-all flex items-center justify-center"
           aria-label="Open chat"
