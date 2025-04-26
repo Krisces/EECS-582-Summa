@@ -14,7 +14,7 @@ const convertDateToMonth = (rawDate: string) => {
     const split = rawDate.split("-")
     const month = split[1]; // We use ISO format
     const year = split[0];
-    return `${monthNames[Number.parseInt(month) - 1]} (${year})`
+    return `${monthNames[Number.parseInt(month) - 1]}\n(${year})`
 }
 
 function PredictionsChart({ predictions }: { readonly predictions: string[][] }) {

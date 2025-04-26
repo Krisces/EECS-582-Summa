@@ -28,7 +28,12 @@ export default function AnalysisPage() {
 
             const predictionsData = await predictSpending(email); // Pass the email
             console.log('Predictions:', predictionsData); // Log the predictions
-            setPredictions(predictionsData);  // Set state with the correct type
+            if (predictionsData.error) {
+                // Set state with the correct type
+                setError(predictionsData.error);
+            } else {
+                setPredictions(predictionsData.results);
+            }
         } catch (error) {
             console.error('Error fetching predictions:', error);
             setError('Failed to fetch predictions. Please try again.');

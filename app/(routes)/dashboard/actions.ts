@@ -4,11 +4,25 @@ import { fetchExpenses } from '@/lib/fetchExpenses';
 import { v4 as uuidv4 } from 'uuid';
 import { readFileSync } from 'fs';
 
-export async function predictSpending(email: string): Promise<string[][] | null> {
+type Predictions = {
+    readonly results: string[][] | null;
+    readonly error: string | undefined;
+};
+
+const addError = (error: string): Predictions => ({
+    results: null,
+    error: error
+});
+
+export async function predictSpending(email: string): Promise<Predictions> {
     try {
         console.log('Fetching expenses...');
         const randomSalt = uuidv4(); // This is used to synchrosize access
-        await fetchExpenses(email, randomSalt);
+        const result = await fetchExpenses(email, randomSalt);
+
+        if (result.error !== undefined) {
+            return { results: null, error: result.error };
+        }
 
         return new Promise((resolve, reject) => {
             console.log('Running Python script...');
@@ -38,24 +52,20 @@ export async function predictSpending(email: string): Promise<string[][] | null>
                 if (code === 0) {
                     try {
                         const rawData = readFileSync(`/tmp/${randomSalt}.json`).toString();
-                        const parsedData = JSON.parse(rawData);
+                        const parsedData: string[][] = JSON.parse(rawData);
                         console.log(data);
-                        if (parsedData.error) {
-                            reject(new Error(parsedData.error));
-                        } else {
-                            resolve(parsedData);
-                        }
+                        resolve({ results: parsedData, error: undefined });
                     } catch (error) {
                         console.error('Invalid JSON:', data);
-                        reject(new Error('Failed to generate predictions.'));
+                        resolve(addError('Failed to generate predictions.'));
                     }
                 } else {
-                    reject(new Error('Python script execution failed.'));
+                    reject(addError('Python script execution failed.'));
                 }
             });
         });
     } catch (error) {
         console.error('Error in predictSpending:', error);
-        throw new Error('Failed to fetch expenses or generate predictions.');
+        return addError('Failed to fetch expenses or generate predictions.');
     }
 }
