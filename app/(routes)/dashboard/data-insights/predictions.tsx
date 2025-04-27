@@ -1,5 +1,14 @@
-"use client"
-import React from "react"
+/**
+Prologue:
+Name of Program: app/(routes)/dashboard/data-insights/predictions.tsx
+Description: Provides Predictions Chart JSX Component.
+Inputs: None
+Outputs: Exports Predictions Chart component to show the dashboard
+Author: Kristin Boeckmann, Zach Alwin, Shravya Mehta, Lisa Phan, Vinayak Jha
+Creation Date: 04/27/2025
+*/
+"use client";
+import React from "react"; // Import react
 import { Bar, BarChart, Tooltip, XAxis, YAxis, ResponsiveContainer } from "recharts"; // Import charts component
 import { ChartConfig, ChartContainer } from "@/components/ui/chart"; // Import chart component
 
@@ -10,15 +19,26 @@ const monthNames = [
     'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
+// Name: convertDateToMonth
+// Author: Vinayak Jha
+// Date: 04/27/2025
+// Preconditions: rawDate (as string, in ISO format)
+// Postconditions: string (but prettified)
 const convertDateToMonth = (rawDate: string) => {
-    const split = rawDate.split("-")
-    const month = split[1]; // We use ISO format
-    const year = split[0];
-    return `${monthNames[Number.parseInt(month) - 1]}\n(${year})`
+    const split = rawDate.split("-"); // Split the date
+    const month = split[1]; // We use ISO format (this is the month)
+    const year = split[0]; // This is the year
+    return `${monthNames[Number.parseInt(month) - 1]}\n(${year})`; // Return "MONTH (YEAR)"
 }
 
+// Name: PredictionsChart
+// Author: Vinayak Jha
+// Date: 04/27/2025
+// Preconditions: predictions (as nested list of strings)
+// Postconditions: JSX component for the chart
 function PredictionsChart({ predictions }: { readonly predictions: string[][] }) {
 
+    // Define the chart config
     const chartConfig = {
         "Prediction": {
             label: "Prediction",
@@ -34,6 +54,7 @@ function PredictionsChart({ predictions }: { readonly predictions: string[][] })
         }
     }
 
+    // Map the predictions
     const mappedPredictions = React.useMemo(() => predictions.map((row) => ({
         "Prediction": Number.parseFloat(row[0]).toFixed(2),
         "Prediction (Lower)": Number.parseFloat(row[1]).toFixed(2),
@@ -65,4 +86,5 @@ function PredictionsChart({ predictions }: { readonly predictions: string[][] })
 
 }
 
+// Export PredictionsChart
 export default PredictionsChart;
