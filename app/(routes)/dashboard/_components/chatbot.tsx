@@ -3,16 +3,18 @@
 import { useState, useEffect, useRef } from 'react';
 import { useUser } from '@clerk/nextjs';
 
+// Main Chatbot component
 export default function Chatbot() {
-  const [messages, setMessages] = useState<string[]>([]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
-  const chatRef = useRef<HTMLDivElement>(null);
+  // State variables
+  const [messages, setMessages] = useState<string[]>([]); // List of chat messages
+  const [input, setInput] = useState(''); // User input field
+  const [loading, setLoading] = useState(false); // Loading state when waiting for bot reply
+  const [isOpen, setIsOpen] = useState(false); // Toggle chat window open/close
+  const chatRef = useRef<HTMLDivElement>(null); // Reference to the chat messages container for auto-scrolling
 
-  const { user } = useUser();
+  const { user } = useUser(); // Get the logged-in user info from Clerk authentication
 
-  // Load messages from localStorage on mount
+  // Load messages from localStorage when component mounts
   useEffect(() => {
     const saved = localStorage.getItem('chat_messages');
     if (saved) {
@@ -20,96 +22,113 @@ export default function Chatbot() {
     }
   }, []);
 
+  // Save updated messages to localStorage whenever messages change
   useEffect(() => {
     localStorage.setItem('chat_messages', JSON.stringify(messages));
   }, [messages]);
 
+  // Scroll to the bottom when new messages come in and chat is open
   useEffect(() => {
     if (chatRef.current && isOpen) {
       chatRef.current.scrollTop = chatRef.current.scrollHeight;
     }
   }, [messages, loading, isOpen]);
 
+  // Handle sending a new message
   const sendMessage = async () => {
-    if (!input.trim()) return;
+    if (!input.trim()) return; // Do not send empty messages
 
-    const userMessage = `You: ${input}`;
-    const updatedMessages = [...messages, userMessage];
+    const userMessage = `You: ${input}`; // Format the user message
+    const updatedMessages = [...messages, userMessage]; // Add user message to the chat
 
-    setMessages(updatedMessages);
-    setInput('');
-    setLoading(true);
+    setMessages(updatedMessages); // Update UI immediately
+    setInput(''); // Clear input field
+    setLoading(true); // Show loading state
 
     try {
+      // Send request to backend API with user input and user email
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: input, email: user?.primaryEmailAddress?.emailAddress as string }),
       });
 
-      const data = await res.json();
-      const botReply = `${data.reply || data.message || 'No reply from model.'}`;
+      const data = await res.json(); // Parse response
+      const botReply = `${data.reply || data.message || 'No reply from model.'}`; // Fallback reply
 
-      setMessages([...updatedMessages, botReply]);
+      setMessages([...updatedMessages, botReply]); // Add bot reply to chat
     } catch (err) {
+      // Handle API call errors
       setMessages([...updatedMessages, 'Error reaching the server.']);
     } finally {
-      setLoading(false);
+      setLoading(false); // Remove loading state
     }
   };
 
   return (
     <div className="fixed bottom-6 right-6 z-50">
       {isOpen ? (
+        // Chat window when open
         <div className="w-96 bg-white rounded-lg shadow-xl border border-gray-200 flex flex-col max-h-96">
+          {/* Chat header with close button */}
           <div
             className="bg-violet-950 text-white p-3 rounded-t-lg flex justify-between items-center cursor-pointer"
             onClick={() => setIsOpen(false)}
           >
             <h2 className="font-medium flex items-center gap-2">
+              {/* Chat Icon */}
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
+                <path fillRule="evenodd" d="..." clipRule="evenodd" />
               </svg>
               Summa Assistant
             </h2>
+            {/* Close Icon */}
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414L11.414 12l3.293 3.293a1 1 0 01-1.414 1.414L10 13.414l-3.293 3.293a1 1 0 01-1.414-1.414L8.586 12 5.293 8.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              <path fillRule="evenodd" d="..." clipRule="evenodd" />
             </svg>
           </div>
 
+          {/* Messages area */}
           <div
             ref={chatRef}
             className="flex-1 p-3 overflow-y-auto bg-gray-50"
             style={{ minHeight: "240px", maxHeight: "calc(100% - 110px)" }}
           >
+            {/* If no messages, show a welcome prompt */}
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center text-gray-500">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mb-2 text-blue-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                <svg xmlns="..." className="h-10 w-10 mb-2 text-blue-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="..." />
                 </svg>
                 <p>How can I help you today?</p>
               </div>
             ) : (
+              // Render messages
               messages.map((msg, idx) => (
                 <div key={idx} className="mb-2">
+                  {/* Show 'You' label for user's messages */}
                   {msg.startsWith('You:') && (
                     <div className="text-right text-slate-500 italic">You</div>
                   )}
+                  {/* Style messages differently for user and bot */}
                   <div className={`${msg.startsWith('You:') ? 'text-right' : 'text-left'}`}>
                     <span className={`inline-block px-3 py-2 rounded-lg text-sm ${msg.startsWith('You:')
                       ? 'bg-violet-950 text-white'
                       : 'bg-gray-200 text-gray-800'
                       }`}>
+                      {/* Remove 'You:' prefix from display */}
                       {msg.replace('You: ', '')}
                     </span>
                   </div>
                 </div>
               ))
             )}
+            {/* Show loading animation when waiting for bot reply */}
             {loading && (
               <div className="text-left">
                 <span className="px-3 py-2 rounded-lg bg-gray-200 text-gray-800 text-sm flex items-center gap-2">
                   <span className="flex space-x-1">
+                    {/* Animated dots */}
                     <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></span>
                     <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
                     <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></span>
@@ -119,6 +138,8 @@ export default function Chatbot() {
               </div>
             )}
           </div>
+
+          {/* Input field and send button */}
           <div className="p-3 border-t bg-white mt-auto rounded-b-lg">
             <div className="flex gap-2">
               <input
@@ -139,13 +160,15 @@ export default function Chatbot() {
           </div>
         </div>
       ) : (
+        // Chat closed button (floating button)
         <button
           onClick={() => setIsOpen(true)}
           className="bg-violet-950 text-white rounded-full p-4 shadow-lg hover:bg-violet-500 transition-all flex items-center justify-center"
           aria-label="Open chat"
         >
+          {/* Chat icon */}
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="..." />
           </svg>
         </button>
       )}
