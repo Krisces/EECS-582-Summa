@@ -2,9 +2,11 @@
 // app/api/chat/route.ts
 import { getAuth } from '@clerk/nextjs/server'; // Use Clerk's server-side utility
 import { NextResponse, NextRequest } from 'next/server';
-import { db } from '@/utils/dbConfig'; // Import your database instance
-import { Expenses, Categories } from '@/utils/schema'; // Import your tables
+import { db } from '@/utils/dbConfig'; // Import database instance
+import { Expenses, Categories, Income} from '@/utils/schema'; // Import tables
 import { desc, eq, getTableColumns, sql } from 'drizzle-orm';
+
+
 
 export async function POST(req: Request) {
   try {
@@ -41,11 +43,23 @@ export async function POST(req: Request) {
       .from(Expenses) // Start from Expenses to ensure all expenses are fetched
       .leftJoin(Categories, eq(Categories.id, Expenses.categoryId)) // Use leftJoin if you want all expenses
       .where(eq(Expenses.createdBy, email)) // Ensure the user is the one who created the expenses
-      .orderBy(desc(Expenses.id)); // Order by ID to get the latest expenses
+      .orderBy(desc(Expenses.id));
+
+      const incomes = await db
+      .select({
+        id: Income.id,
+        name: Income.name,
+        amount: Income.amount,
+        createdBy: Income.createdBy,
+      })
+      .from(Income)
+      .where(eq(Income.createdBy, email))
+      .orderBy(desc(Income.id));
 
     // Analyze expenses
     // Calculate total expenses and spending by category
     const totalExpenses = expenses.reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
+    const totalIncome = incomes.reduce((sum, income) => sum + parseFloat(income.amount), 0);
     const categoryTotals: Record<string, number> = {};
     expenses.forEach((expense) => {
       if (expense.categoryName) {
@@ -55,17 +69,17 @@ export async function POST(req: Request) {
     });
 
     // Prepare expense summary for the AI
-    // Create a summary of expenses
-    const expenseSummary = `
+    const financeSummary = `
+      Total income: $${totalIncome.toFixed(2)}.
+      All individual incomes:
+      ${incomes.map((income) => `- ${income.name}: $${income.amount}`).join('\n')}
       Total expenses: $${totalExpenses.toFixed(2)}.
-      Spending by category: ${Object.entries(categoryTotals)
-        .map(([category, amount]) => `${category}: $${amount.toFixed(2)}`)
-        .join(', ')}.
-      All individual expenses: ${expenses
-        .map((expense) => `${expense.name}: $${expense.amount} on ${expense.createdAt}`)
-        .join(', ')}.
+      Spending by category:
+      ${Object.entries(categoryTotals)
+      .map(([category, amount]) => `- ${category}: $${amount.toFixed(2)}`)
+      .join('\n')}
     `;
-    // Create a new message for the AI
+
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -76,7 +90,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         model: 'openai/gpt-3.5-turbo',
         messages: [
-          { role: 'system', content: `You are a helpful budget assistant. Here is the user's expense data: ${expenseSummary}` },
+          { role: 'system', content: `You are a helpful budget assistant. Here is the user's expense data: ${financeSummary}` },
           { role: 'user', content: message },
         ],
       }),

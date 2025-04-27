@@ -33,7 +33,9 @@ import { useUser } from '@clerk/nextjs' // Imports clerk for user authentication
 import { desc, eq, getTableColumns, sql } from 'drizzle-orm' // Imports SQL querying utilities
 import React, { useEffect, useState } from 'react' // Imports React libraries for state and effects
 import AddExpense from '../_components/AddExpenseWindow' // Imports Add Expense component
-import ExpenseListTable from '../_components/ExpenseListTable' // Imports Expense List Table component
+// Import the new table components
+import LatestExpensesTable from '../_components/LatestExpensesTable'
+import FutureExpensesTable from '../_components/FutureExpensesTable'
 import { ArrowLeft, PenBox, Trash } from 'lucide-react' // Icons for UI
 import {
     AlertDialog,
@@ -51,6 +53,7 @@ import EditCategory from '../_components/EditCategory'
 import CategorytItem from '../../categories/_components/CategoryItem'
 import { toast } from 'react-toastify' // Imports toast for notifications
 import { Button } from '@/components/ui/button'
+import Chatbot from '../../_components/chatbot'
 
 //This component displays the user's expenses for a specific category
 function ExpensesScreen({ params }: any) {
@@ -170,9 +173,17 @@ function ExpensesScreen({ params }: any) {
                 />
             </div>
             <div className='mt-4'>
-                <h2 className='font-bold text-lg'>Latest Expenses</h2>
-                <ExpenseListTable expensesList={expensesList}
-                    refreshData={() => getCategoryInfo()} />
+                <LatestExpensesTable 
+                    expensesList={expensesList}
+                    refreshData={() => getCategoryInfo()} 
+                />
+                <FutureExpensesTable 
+                    expensesList={expensesList}
+                    refreshData={() => getCategoryInfo()} 
+                />
+            </div>
+            <div>
+                <Chatbot/>
             </div>
         </div>
     );

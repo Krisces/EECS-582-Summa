@@ -13,6 +13,7 @@ import React, { useEffect } from 'react';
 import CategoryList from './_components/CategoryList';
 import { useDateRange } from '@/context/DateRangeContext';
 import { useUser } from '@clerk/nextjs';
+import Chatbot from '../_components/chatbot';
 
 function Categories() {
   const { dateRange } = useDateRange();
@@ -44,6 +45,9 @@ function Categories() {
         My Categories
       </h2>
       <CategoryList />
+      <div>
+        <Chatbot/>
+      </div>
     </div>
   );
 }

@@ -26,7 +26,8 @@ import { ChartConfig, ChartContainer } from "@/components/ui/chart"; // Import c
 import Overview from './_components/Overview'; // Import Overview component
 import AddExpenseDialog from './_components/AddExpnseDialog'; // Import AddExpensesDialog component
 import AddIncome from './_components/AddIncome'; // Import AddIncome component
-import ExpenseListTable from './expenses/_components/ExpenseListTable'; // Import ExpensesListTable component
+import LatestExpensesTable from './expenses/_components/LatestExpensesTable'
+import FutureExpensesTable from './expenses/_components/FutureExpensesTable'
 import { useDateRange } from '@/context/DateRangeContext'; // Import useDateRange hook
 import Chatbot from './_components/chatbot';
 
@@ -529,11 +530,18 @@ function Page() {
         </div>
       </div>
       <div className="mx-10 mt-8 mb-5">
-        <h2 className="font-bold text-2xl">Latest Expenses</h2>
+        <h2 className="font-bold text-2xl">Expenses</h2>
       </div>
-      <div className="mx-10 mt-8 mb-16">
-        <ExpenseListTable expensesList={expensesList} refreshData={() => getCategoryList} />
-      </div>
+      <div className='mt-4'>
+                <LatestExpensesTable 
+                    expensesList={expensesList}
+                    refreshData={() => getCategoryList()} 
+                />
+                <FutureExpensesTable 
+                    expensesList={expensesList}
+                    refreshData={() => getCategoryList()} 
+                />
+            </div>
       <div>
         <Chatbot/>
       </div>
