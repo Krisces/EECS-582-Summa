@@ -8,16 +8,18 @@ import { desc, eq, getTableColumns, sql } from 'drizzle-orm';
 
 export async function POST(req: Request) {
   try {
+    // Clone the request to avoid mutating the original request
+    // and extract the user ID from the request headers
     const clonedReq = req.clone();
     const res = getAuth(new NextRequest(clonedReq));
 
     const userId = res.userId;
-
+    // Check if userId is available
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const { message, email } = await req.json();
-
+    // Check if message and email are provided
     if (!message) {
       return NextResponse.json({ error: 'No message provided' }, { status: 400 });
     }
@@ -29,7 +31,7 @@ export async function POST(req: Request) {
     // Fetch the user's expense data
     const expenses = await db
       .select({
-        id: Expenses.id,
+        id: Expenses.id, 
         name: Expenses.name,
         amount: Expenses.amount,
         createdAt: Expenses.createdAt,
@@ -39,9 +41,10 @@ export async function POST(req: Request) {
       .from(Expenses) // Start from Expenses to ensure all expenses are fetched
       .leftJoin(Categories, eq(Categories.id, Expenses.categoryId)) // Use leftJoin if you want all expenses
       .where(eq(Expenses.createdBy, email)) // Ensure the user is the one who created the expenses
-      .orderBy(desc(Expenses.id));
+      .orderBy(desc(Expenses.id)); // Order by ID to get the latest expenses
 
     // Analyze expenses
+    // Calculate total expenses and spending by category
     const totalExpenses = expenses.reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
     const categoryTotals: Record<string, number> = {};
     expenses.forEach((expense) => {
@@ -52,6 +55,7 @@ export async function POST(req: Request) {
     });
 
     // Prepare expense summary for the AI
+    // Create a summary of expenses
     const expenseSummary = `
       Total expenses: $${totalExpenses.toFixed(2)}.
       Spending by category: ${Object.entries(categoryTotals)
@@ -61,13 +65,14 @@ export async function POST(req: Request) {
         .map((expense) => `${expense.name}: $${expense.amount} on ${expense.createdAt}`)
         .join(', ')}.
     `;
-
+    // Create a new message for the AI
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY!}`,
       },
+      // Use the expense summary in the system message
       body: JSON.stringify({
         model: 'openai/gpt-3.5-turbo',
         messages: [
@@ -76,15 +81,15 @@ export async function POST(req: Request) {
         ],
       }),
     });
-
+    // Check if the response is ok
     const data = await response.json();
 
     console.log('OpenRouter response:', data); //debug line
 
-    const reply = data.choices?.[0]?.message?.content || 'No reply from model.';
-    return NextResponse.json({ message: reply });
-  } catch (error) {
-    console.error('API Error:', error);
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 });
+    const reply = data.choices?.[0]?.message?.content || 'No reply from model.'; // Get the reply from the AI
+    return NextResponse.json({ message: reply }); // Return the AI's reply
+  } catch (error) { // Handle errors
+    console.error('API Error:', error); // Log the error for debugging
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 }); // Return a 500 error response
   }
 }
