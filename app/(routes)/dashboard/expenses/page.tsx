@@ -30,9 +30,11 @@ import { db } from '@/utils/dbConfig';
 import { Categories, Expenses } from '@/utils/schema';
 import { desc, eq, getTableColumns, sql } from 'drizzle-orm';
 import { useUser } from '@clerk/nextjs';
-import ExpenseListTable from './_components/ExpenseListTable';
+import LatestExpensesTable from './_components/LatestExpensesTable'
+import FutureExpensesTable from './_components/FutureExpensesTable'
 import moment from 'moment';
 import { startOfMonth } from 'date-fns';
+import Chatbot from '../_components/chatbot';
 
 function Page() {
 
@@ -120,10 +122,20 @@ function Page() {
   return (
     <div className='p-10'>
       <title>Summa Expenses</title>
-        <h2 className='text-3xl font-bold flex justify-between items-center'>Latest Expenses</h2>
-      <div className="mt-8 mb-16">
-        <ExpenseListTable expensesList={expensesList} refreshData={() => getCategoryList} />
-      </div>
+        <h2 className='text-3xl font-bold flex justify-between items-center'>Expenses</h2>
+        <div className='mt-4'>
+            <LatestExpensesTable 
+                    expensesList={expensesList}
+                    refreshData={() => getCategoryList()}
+            />
+            <FutureExpensesTable 
+                    expensesList={expensesList}
+                    refreshData={() => getCategoryList()}
+            />
+        </div>
+        <div>
+          <Chatbot/>
+        </div>
     </div>
   )
 }

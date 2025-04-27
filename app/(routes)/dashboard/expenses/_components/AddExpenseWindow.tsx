@@ -42,13 +42,13 @@
  */
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input'
+import { Input } from '@/components/ui/input';
 import { db } from '@/utils/dbConfig';
 import { Categories, Expenses } from '@/utils/schema';
-import React, { useEffect, useState } from 'react'
-import { Check, ChevronsUpDown } from "lucide-react"
+import React, { useEffect, useState } from 'react';
+import { Check, ChevronsUpDown } from "lucide-react";
 import { toast } from 'sonner';
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 import {
   Command,
   CommandEmpty,
@@ -56,15 +56,24 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command"
+} from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
-import { DatePicker } from "@/components/ui/DatePicker"
+} from "@/components/ui/popover";
+import { DatePicker } from "@/components/ui/DatePicker";
 import moment from 'moment';
 import { eq } from 'drizzle-orm';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 interface AddExpenseProps {
   categoryId: string; // Passed as a string from parent
@@ -72,14 +81,26 @@ interface AddExpenseProps {
   refreshData: any;
 }
 
-function AddExpense({ categoryId, user, refreshData }: AddExpenseProps) {
+// Define recurring options
+const recurringOptions = [
+  { value: "none", label: "One-time" },
+  { value: "weekly", label: "Weekly", instances: 104 }, // 2 years × 52 weeks
+  { value: "biweekly", label: "Every 2 weeks", instances: 52 }, // 2 years × 26 biweekly periods
+  { value: "monthly", label: "Monthly", instances: 24 }, // 2 years × 12 months
+  { value: "yearly", label: "Yearly", instances: 2 }, // 2 years
+];
 
+function AddExpense({ categoryId, user, refreshData }: AddExpenseProps) {
   const [name, setName] = useState<string>('');
   const [amount, setAmount] = useState<string>('');
   const [categories, setCategories] = useState<{ value: string; label: string; icon: string }[]>([]); // Categories for dropdown
   const [transactionDate, setTransactionDate] = useState<Date | undefined>(undefined); // Selected date
   const [selectedCategory, setSelectedCategory] = useState<string>(''); // Selected category ID
   const [open, setOpen] = useState(false); // Dropdown popover state
+  
+  // New state for recurring options
+  const [isRecurring, setIsRecurring] = useState<boolean>(false);
+  const [recurringType, setRecurringType] = useState<string>("none");
 
   useEffect(() => {
     // Fetch categories from the database
@@ -98,27 +119,94 @@ function AddExpense({ categoryId, user, refreshData }: AddExpenseProps) {
     };
 
     fetchCategories();
-  }, []);
+  }, [user?.primaryEmailAddress?.emailAddress]);
+
+  // Generate future dates based on recurring type
+  const generateFutureDates = (startDate: Date, recurringType: string): Date[] => {
+    const dates: Date[] = [];
+    const option = recurringOptions.find(opt => opt.value === recurringType);
+    
+    if (!option || recurringType === "none") {
+      return [startDate];
+    }
+    
+    const instances = option.instances || 1; 
+    const date = new Date(startDate);
+    
+    for (let i = 0; i < instances; i++) {
+      // Clone the date to avoid modifying the original
+      const newDate = new Date(date);
+      dates.push(newDate);
+      
+      // Increment date based on recurring type
+      switch (recurringType) {
+        case "weekly":
+          date.setDate(date.getDate() + 7);
+          break;
+        case "biweekly":
+          date.setDate(date.getDate() + 14);
+          break;
+        case "monthly":
+          date.setMonth(date.getMonth() + 1);
+          break;
+        case "yearly":
+          date.setFullYear(date.getFullYear() + 1);
+          break;
+        default:
+          break;
+      }
+    }
+    
+    return dates;
+  };
 
   const addNewExpense = async () => {
+    if (!transactionDate) {
+      toast.error('Please select a transaction date');
+      return;
+    }
+
     const categoryIdInt = parseInt(selectedCategory, 10); // Converts category to number
-
-    // Format the date as MM-DD-YYYY
-    const formattedDate = transactionDate ? moment(transactionDate).format('MM-DD-YYYY') : '';
-
-    const result = await db.insert(Expenses) // Inserts expense
-      .values({
-        name: name,
-        amount: amount,
-        categoryId: categoryIdInt,
-        createdAt: formattedDate, // Use the formatted date
-        createdBy: user?.primaryEmailAddress?.emailAddress as string,
-      }).returning({ insertedId: Expenses.id });
-
-    console.log(result);
-    if (result) {
+    
+    try {
+      // Generate dates based on recurring settings
+      const dates = isRecurring && recurringType !== "none" 
+        ? generateFutureDates(transactionDate, recurringType)
+        : [transactionDate];
+      
+      // Create an expense entry for each date
+      const insertPromises = dates.map(date => {
+        const formattedDate = moment(date).format('MM-DD-YYYY');
+        
+        return db.insert(Expenses).values({
+          name: name,
+          amount: amount,
+          categoryId: categoryIdInt,
+          createdAt: formattedDate,
+          createdBy: user?.primaryEmailAddress?.emailAddress as string,
+        });
+      });
+      
+      await Promise.all(insertPromises);
+      
       refreshData();
-      toast('New Expense Added!');
+      
+      if (isRecurring && recurringType !== "none") {
+        const option = recurringOptions.find(opt => opt.value === recurringType);
+        toast.success(`Created ${option?.instances} ${recurringType} expenses over the next 2 years`);
+      } else {
+        toast.success('New Expense Added!');
+      }
+      
+      // Reset form
+      setName('');
+      setAmount('');
+      setTransactionDate(undefined);
+      setIsRecurring(false);
+      setRecurringType("none");
+    } catch (error) {
+      console.error("Failed to add expense:", error);
+      toast.error('Failed to add expense. Please try again.');
     }
   };
 
@@ -135,6 +223,7 @@ function AddExpense({ categoryId, user, refreshData }: AddExpenseProps) {
         <Input
           type="string"
           placeholder='e.g. Walmart'
+          value={name}
           onChange={(e) => { setName(e.target.value) }}
         />
       </div>
@@ -148,7 +237,7 @@ function AddExpense({ categoryId, user, refreshData }: AddExpenseProps) {
               variant="outline"
               role="combobox"
               aria-expanded={open}
-              className="w-[200px] justify-between"
+              className="w-full justify-between"
             >
               {selectedCategory
                 ? categories.find((category) => category.value === selectedCategory)?.label
@@ -194,6 +283,7 @@ function AddExpense({ categoryId, user, refreshData }: AddExpenseProps) {
         <Input
           type="number"
           placeholder='e.g. 50'
+          value={amount}
           onChange={(e) => { setAmount(e.target.value) }}
         />
       </div>
@@ -203,11 +293,60 @@ function AddExpense({ categoryId, user, refreshData }: AddExpenseProps) {
         </h2>
         <DatePicker onDateChange={setTransactionDate} />
       </div>
-      <Button disabled={!(name && amount && selectedCategory && transactionDate)}
+      
+      {/* Recurring expense options */}
+      <div className='mt-3 flex items-center space-x-2'>
+        <Checkbox 
+          id="is-recurring" 
+          checked={isRecurring}
+          onCheckedChange={(checked) => {
+            setIsRecurring(checked === true);
+            if (checked === false) {
+              setRecurringType("none");
+            }
+          }}
+        />
+        <Label htmlFor="is-recurring">Make this a recurring expense</Label>
+      </div>
+      
+      {isRecurring && (
+        <div className='mt-2'>
+          <h2 className='text-black font-medium my-1'>
+            Recurrence Pattern
+          </h2>
+          <Select
+            value={recurringType}
+            onValueChange={setRecurringType}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select frequency" />
+            </SelectTrigger>
+            <SelectContent>
+              {recurringOptions.slice(1).map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {recurringType !== "none" && (
+            <p className='text-xs text-gray-500 mt-1'>
+              This will create {recurringOptions.find(opt => opt.value === recurringType)?.instances} 
+              {' '}{recurringType} expenses over the next 2 years.
+            </p>
+          )}
+        </div>
+      )}
+      
+      <Button 
+        disabled={!(name && amount && selectedCategory && transactionDate && (isRecurring ? recurringType !== "none" : true))}
         onClick={() => addNewExpense()}
-        className='mt-3 w-full'>Add New Expense</Button>
+        className='mt-4 w-full'
+      >
+        {isRecurring ? 'Add Recurring Expenses' : 'Add New Expense'}
+      </Button>
     </div>
-  )
+  );
 }
 
-export default AddExpense // Exports the component
+export default AddExpense;

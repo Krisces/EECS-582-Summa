@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useUser } from '@clerk/nextjs'; // Import useUser hook
+import { useUser } from '@clerk/nextjs';
 
 export default function Chatbot() {
   const [messages, setMessages] = useState<string[]>([]);
@@ -61,7 +61,7 @@ export default function Chatbot() {
   return (
     <div className="fixed bottom-6 right-6 z-50">
       {isOpen ? (
-        <div className="w-80 bg-white rounded-lg shadow-xl border border-gray-200 flex flex-col">
+        <div className="w-96 bg-white rounded-lg shadow-xl border border-gray-200 flex flex-col max-h-96">
           <div
             className="bg-violet-950 text-white p-3 rounded-t-lg flex justify-between items-center cursor-pointer"
             onClick={() => setIsOpen(false)}
@@ -79,7 +79,8 @@ export default function Chatbot() {
 
           <div
             ref={chatRef}
-            className="flex-1 p-3 h-64 overflow-y-auto bg-gray-50"
+            className="flex-1 p-3 overflow-y-auto bg-gray-50"
+            style={{ minHeight: "240px", maxHeight: "calc(100% - 110px)" }}
           >
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center text-gray-500">
@@ -107,7 +108,7 @@ export default function Chatbot() {
             )}
             {loading && (
               <div className="text-left">
-                <span className="inline-block px-3 py-2 rounded-lg bg-gray-200 text-gray-800 text-sm flex items-center gap-2">
+                <span className="px-3 py-2 rounded-lg bg-gray-200 text-gray-800 text-sm flex items-center gap-2">
                   <span className="flex space-x-1">
                     <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></span>
                     <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
@@ -118,7 +119,7 @@ export default function Chatbot() {
               </div>
             )}
           </div>
-          <div className="p-3 border-t bg-white">
+          <div className="p-3 border-t bg-white mt-auto rounded-b-lg">
             <div className="flex gap-2">
               <input
                 value={input}
@@ -151,4 +152,3 @@ export default function Chatbot() {
     </div>
   );
 }
-
