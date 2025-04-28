@@ -1,4 +1,17 @@
-
+/*
+Prologue Comments
+Name: Route.ts
+Description: This file handles the chat route for the budget app, allowing users to interact with the AI assistant.
+Programmers: Zach Alwin, Kisten Bockmann, Lisa Phan, Vinayak Jha, Shravya Matta
+Date Created: 4-20-2025
+Last Modified: 4-27-2025
+Preconditions: The user must be authenticated and have provided a valid email and message.
+Postconditions: The AI assistant responds to the user's message based on their financial data.
+Error and Exceptions:  If the user is not authenticated, or if the request fails, an error response is returned.
+Side Effects: The user's financial data is fetched from the database and used to generate a response.
+Invariants: The AI assistant's response is based on the user's financial data and the message provided.
+Known Faults: N/A
+*/
 // app/api/chat/route.ts
 import { getAuth } from '@clerk/nextjs/server'; // Use Clerk's server-side utility
 import { NextResponse, NextRequest } from 'next/server';
