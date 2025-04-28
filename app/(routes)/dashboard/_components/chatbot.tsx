@@ -1,3 +1,25 @@
+/**
+ * Prologue
+ * 
+ * Chatbot Component
+ *
+ * This component provides an interactive chatbot widget for users to ask questions and receive replies.
+ * It includes a floating button to toggle the chat window, manages user inputs and bot responses, 
+ * and saves conversation history in local storage for persistence.
+ * Automatically scrolls to the latest message and shows a typing indicator while awaiting a reply.
+ * 
+ * Input: User text input from the chatbox.
+ * Output: JSX that displays a floating chatbot with conversation history and real-time interactions.
+ * 
+ * Dependencies:
+ * - `@clerk/nextjs` for retrieving the authenticated user's email
+ * - `fetch` API to send user messages to the backend endpoint `/api/chat`
+ * - `useState`, `useEffect`, `useRef` hooks from React
+ * 
+ * Author: Kristin Boeckmann, Lisa Phan, Zach Alwin, Vinayak Jha, Shravya Matta
+ * Creation Date: 04/27/2025
+ */
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
